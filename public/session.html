@@ -320,13 +320,15 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       renderPersonaBubbles();
     }
 
+    let showRemoveFor = null;
+
     function renderPersonaBubbles() {
       const container = document.getElementById('personaBubbles');
       container.innerHTML = '';
 
       personas.forEach(persona => {
         const wrap = document.createElement('div');
-        wrap.className = 'persona-bubble' + (persona.name === activePersona ? ' active' : '');
+        wrap.className = 'persona-bubble' + (persona.name === activePersona ? ' active' : '') + (persona.name === showRemoveFor ? ' show-remove' : '');
         wrap.innerHTML = `
           <div class="bubble-avatar" style="background:${persona.color}">
             ${getInitials(persona.name)}
@@ -340,12 +342,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         });
         wrap.addEventListener('click', () => {
           const isTouch = window.matchMedia('(hover: none)').matches;
-          if (isTouch && !wrap.classList.contains('show-remove')) {
-            document.querySelectorAll('.persona-bubble.show-remove').forEach(b => b.classList.remove('show-remove'));
-            wrap.classList.add('show-remove');
-            return;
-          }
-          wrap.classList.remove('show-remove');
+          if (isTouch) showRemoveFor = persona.name;
           setActivePersona(persona.name);
         });
         container.appendChild(wrap);
@@ -649,6 +646,11 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
             cell.addEventListener('mouseenter', e => showTooltip(e, freeNames, busyNames, info));
             cell.addEventListener('mousemove',  e => moveTooltip(e));
             cell.addEventListener('mouseleave', hideTooltip);
+            cell.addEventListener('touchstart', e => {
+              e.preventDefault();
+              const rect = cell.getBoundingClientRect();
+              showTooltipAtCell(rect, freeNames, busyNames, info);
+            }, { passive: false });
 
             if (ratio === 1) {
               cell.classList.add('full-overlap');
@@ -713,6 +715,35 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     }
 
     function hideTooltip() { tooltip.style.opacity = '0'; }
+
+    function showTooltipAtCell(rect, freeNames, busyNames, info) {
+      let html = '';
+      if (freeNames.length) {
+        html += `<div style="color:#4ade80;font-weight:600;margin-bottom:4px;">✓ Free (${freeNames.length})</div>`;
+        html += freeNames.map(n => `<div style="margin-left:8px;">${n}</div>`).join('');
+      }
+      if (busyNames.length) {
+        if (freeNames.length) html += `<div style="margin:6px 0 4px;border-top:1px solid rgba(255,255,255,0.15);"></div>`;
+        html += `<div style="color:#f87171;font-weight:600;margin-bottom:4px;">✗ Busy (${busyNames.length})</div>`;
+        html += busyNames.map(n => `<div style="margin-left:8px;">${n}</div>`).join('');
+      }
+      tooltip.innerHTML = html;
+      tooltip.style.opacity = '1';
+      // Position above the cell, centered
+      const tw = tooltip.offsetWidth || 180;
+      const th = tooltip.offsetHeight || 80;
+      let left = rect.left + rect.width / 2 - tw / 2;
+      let top  = rect.top - th - 10;
+      if (left < 8) left = 8;
+      if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+      if (top < 8) top = rect.bottom + 10;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top  = top + 'px';
+    }
+
+    document.addEventListener('touchstart', e => {
+      if (!e.target.closest('#overlapGrid, #sidePanelGrid')) hideTooltip();
+    }, { passive: true });
 
     // ---- Splash tutorial bubble ----
     function showSplashBubble() {
@@ -893,6 +924,7 @@ document.getElementById('aiImportModal').classList.remove('hidden');
     // Dismiss show-remove on outside tap (mobile)
     document.addEventListener('click', e => {
       if (!e.target.closest('.persona-bubble')) {
+        showRemoveFor = null;
         document.querySelectorAll('.persona-bubble.show-remove').forEach(b => b.classList.remove('show-remove'));
       }
     });
