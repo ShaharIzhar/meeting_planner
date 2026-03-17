@@ -663,6 +663,16 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
     // ---- Splash tutorial bubble ----
     function showSplashBubble() {
+      const backdrop = document.createElement('div');
+      backdrop.id = 'splashBackdrop';
+      backdrop.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+        z-index: 49; opacity: 0; transition: opacity 0.3s;
+      `;
+      backdrop.addEventListener('click', dismissSplash);
+      document.body.appendChild(backdrop);
+      requestAnimationFrame(() => { backdrop.style.opacity = '1'; });
+
       const splash = document.createElement('div');
       splash.id = 'splashBubble';
       splash.innerHTML = `
@@ -827,6 +837,8 @@ document.getElementById('aiImportModal').classList.remove('hidden');
     window.dismissSplash = function() {
       const el = document.getElementById('splashBubble');
       if (el) { el.style.animation = 'splash-out 0.2s ease forwards'; setTimeout(() => el.remove(), 200); }
+      const bd = document.getElementById('splashBackdrop');
+      if (bd) { bd.style.opacity = '0'; setTimeout(() => bd.remove(), 300); }
     };
 
     // ---- Boot ----

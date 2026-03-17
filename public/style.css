@@ -891,7 +891,12 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   .personas-row { gap: 14px; }
   .card { padding: 16px 12px; border-radius: 12px; }
   .card-title { font-size: 1rem; margin-bottom: 14px; }
+  .hero { padding: 20px 24px 60px; min-height: calc(100vh - 56px); }
   .hero h1 { font-size: 2rem; }
+  .hero p { font-size: 0.95rem; margin-bottom: 32px; }
+  .hero-badge { margin-bottom: 20px; }
+  .hero-stats { gap: 10px 16px; margin-top: 36px; font-size: 0.8rem; }
+  .hero-stats span:is(:nth-child(2), :nth-child(4), :nth-child(6)) { display: none; }
   #grid, #overlapGrid { min-width: 420px; }
   .grid-cell { height: 34px; border-radius: 4px; } /* bigger for touch */
   .grid-label { font-size: 0.7rem; padding-right: 6px; }
@@ -933,10 +938,13 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 /* ---- HERO (landing) stats row ---- */
 .hero-stats {
   display: flex;
-  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 24px;
   margin-top: 48px;
   color: #b0b0b0;
   font-size: 0.85rem;
+  max-width: 520px;
 }
 
 .hero-stats span { display: flex; align-items: center; gap: 6px; }
