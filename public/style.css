@@ -987,7 +987,7 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   .ai-step { padding: 10px 16px 0; }
   .ai-step-label { font-size: 0.78rem; margin-bottom: 6px; }
   .ai-import-footer { padding: 10px 16px 14px; flex-direction: row; align-items: center; justify-content: space-between; }
-  .ai-prompt-box { font-size: 0.75rem; padding: 8px 10px; margin-bottom: 6px; max-height: 140px; overflow-y: auto; }
+  .ai-prompt-box { font-size: 0.75rem; padding: 8px 10px; margin-bottom: 6px; max-height: 200px; overflow-y: auto; }
   .ai-paste-area { min-height: 180px; max-height: 220px; font-size: 0.8rem; }
 
   /* Hint row wraps on small screens */
