@@ -728,12 +728,21 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         const bubRect  = addBub.getBoundingClientRect();
         const secRect  = section.getBoundingClientRect();
         const sw = splash.offsetWidth;
+        const isMobile = window.innerWidth <= 640;
 
-        // Center above the "+" bubble
-        let left = (bubRect.left - secRect.left) + bubRect.width / 2 - sw / 2;
-        // Clamp to section bounds with padding
-        left = Math.max(8, Math.min(left, secRect.width - sw - 8));
-        const top = (bubRect.bottom - secRect.top) + 10;
+        let left, top;
+        if (isMobile) {
+          // Position to the right of the "+" bubble
+          left = (bubRect.right - secRect.left) + 10;
+          top  = (bubRect.top - secRect.top) + bubRect.height / 2 - splash.offsetHeight / 2;
+          // If it overflows right, flip to left
+          if (left + sw > secRect.width - 8) left = (bubRect.left - secRect.left) - sw - 10;
+        } else {
+          // Center below the "+" bubble (desktop)
+          left = (bubRect.left - secRect.left) + bubRect.width / 2 - sw / 2;
+          left = Math.max(8, Math.min(left, secRect.width - sw - 8));
+          top  = (bubRect.bottom - secRect.top) + 10;
+        }
 
         splash.style.left = left + 'px';
         splash.style.top  = top + 'px';
