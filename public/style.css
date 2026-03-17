@@ -940,11 +940,11 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px 24px;
+  gap: 14px 32px;
   margin-top: 48px;
   color: #b0b0b0;
   font-size: 0.85rem;
-  max-width: 520px;
+  max-width: 600px;
 }
 
 .hero-stats span { display: flex; align-items: center; gap: 6px; }
