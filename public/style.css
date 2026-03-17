@@ -403,6 +403,7 @@ body {
 
 .bubble-remove:hover { background: #FF385C; transform: scale(1.15); }
 .persona-bubble:not(.add-bubble):hover .bubble-remove { opacity: 1; }
+.persona-bubble.show-remove .bubble-remove { opacity: 1; }
 
 /* ---- CARDS ---- */
 .card {
@@ -573,7 +574,8 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 }
 
 .ai-import-modal {
-  max-width: 820px;
+  width: min(95vw, 1100px) !important;
+  max-width: 1100px !important;
   padding: 0;
   overflow: hidden;
   max-height: calc(100vh - 40px);
@@ -637,6 +639,10 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   white-space: pre-wrap;
   font-family: inherit;
   margin-bottom: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 160px;
+  overflow-y: auto;
 }
 
 .ai-copy-btn {
@@ -658,6 +664,7 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 
 .ai-paste-area {
   width: 100%;
+  box-sizing: border-box;
   min-height: 110px;
   background: #ffffff;
   border: 1.5px solid #dddddd;

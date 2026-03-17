@@ -338,7 +338,16 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
           e.stopPropagation();
           confirmRemovePersona(persona.name);
         });
-        wrap.addEventListener('click', () => setActivePersona(persona.name));
+        wrap.addEventListener('click', () => {
+          const isTouch = window.matchMedia('(hover: none)').matches;
+          if (isTouch && !wrap.classList.contains('show-remove')) {
+            document.querySelectorAll('.persona-bubble.show-remove').forEach(b => b.classList.remove('show-remove'));
+            wrap.classList.add('show-remove');
+            return;
+          }
+          wrap.classList.remove('show-remove');
+          setActivePersona(persona.name);
+        });
         container.appendChild(wrap);
       });
 
@@ -880,6 +889,13 @@ document.getElementById('aiImportModal').classList.remove('hidden');
       const el = document.getElementById('splashBubble');
       if (el) { el.style.animation = 'splash-out 0.2s ease forwards'; setTimeout(() => el.remove(), 200); }
     };
+
+    // Dismiss show-remove on outside tap (mobile)
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.persona-bubble')) {
+        document.querySelectorAll('.persona-bubble.show-remove').forEach(b => b.classList.remove('show-remove'));
+      }
+    });
 
     // ---- Boot ----
     setGridLocked(true);
