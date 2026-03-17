@@ -36,25 +36,22 @@ body {
 .nav-logo span { color: #222222; }
 
 .session-title-input {
-  border: none;
-  background: transparent;
-  font-size: 1.4rem;
-  font-weight: 700;
+  border: 1.5px solid #ebebeb;
+  background: #f7f7f7;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #222222;
-  text-align: center;
+  text-align: left;
   outline: none;
-  width: 100%;
-  max-width: 480px;
-  padding: 0 10px 4px;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  margin-bottom: 20px;
-  transition: border-color 0.15s;
+  width: 240px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.session-title-input:hover { border-color: #ebebeb; }
-.session-title-input:focus { border-color: #dddddd; }
-.session-title-input::placeholder { color: #d0d0d0; font-weight: 400; }
+.session-title-input:hover { background: #f0f0f0; border-color: #dddddd; }
+.session-title-input:focus { background: #fff; border-color: #222222; }
+.session-title-input::placeholder { color: #b0b0b0; font-weight: 400; }
 
 .nav-actions {
   display: flex;
@@ -231,7 +228,23 @@ body {
 /* ---- PERSONA BUBBLES SECTION ---- */
 .personas-section {
   text-align: center;
-  padding: 20px 0 28px;
+  padding: 12px 0 28px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.title-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #717171;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .personas-section h2 {
@@ -881,8 +894,8 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   .nav-title-input { width: 130px; font-size: 0.85rem; }
   .nav-actions .share-box input { display: none; }
   .page-wrap { padding: 16px 12px 80px; }
-  .personas-section { padding: 12px 0 14px; }
-  .session-title-input { font-size: 1.15rem; margin-bottom: 16px; }
+  .personas-section { padding: 8px 0 14px; }
+  .session-title-input { width: 180px; font-size: 0.85rem; }
   .personas-section h2 { font-size: 0.85rem; margin-bottom: 18px; }
   .bubble-avatar { width: 54px; height: 54px; font-size: 1rem; }
   .personas-row { gap: 14px; }
