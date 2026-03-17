@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MeetSync — Find a time that works for everyone</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav-logo" href="/">meet<span>sync</span></a>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+      Free &amp; no sign-up required
+    </div>
+
+    <h1>Find a time that<br/>works for <em>everyone.</em></h1>
+    <p>Share your availability, see where schedules overlap, and create a Google Meet in one click.</p>
+
+    <div class="hero-cta">
+      <button class="btn-primary" id="createBtn" style="font-size:1.05rem; padding: 18px 48px; border-radius: 12px;">
+        Get started
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <p style="color:#b0b0b0; font-size:0.82rem; margin-bottom:0;">No account needed — just share a link</p>
+    </div>
+
+    <div class="hero-stats">
+      <span><strong>Real-time</strong> availability</span>
+      <span>·</span>
+      <span><strong>Drag-to-select</strong> time slots</span>
+      <span>·</span>
+      <span><strong>1-click</strong> Google Meet</span>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('createBtn').addEventListener('click', async () => {
+      const res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: '' }),
+      });
+      const { id } = await res.json();
+      window.location.href = `/session.html?id=${id}`;
+    });
+  </script>
+</body>
+</html>

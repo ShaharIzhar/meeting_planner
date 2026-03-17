@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MeetSync — Schedule</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a class="nav-logo" href="/">meet<span>sync</span></a>
+    <div class="nav-title-wrap">
+      <input type="text" id="sessionTitleInput" class="nav-title-input" placeholder="Add a meeting title (optional)" maxlength="60" />
+    </div>
+    <div class="nav-actions">
+      <div class="share-box">
+        <input type="text" id="shareLink" readonly style="width:170px;" />
+        <button class="btn-outline btn-sm" onclick="copyLink()">Copy link</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+
+    <!-- MEET BANNER -->
+    <div id="meetLinkBanner" class="meet-banner hidden">
+      🎉 Meeting created!&nbsp; <a id="meetLinkAnchor" href="#" target="_blank">Join Google Meet →</a>
+    </div>
+
+    <!-- PERSONAS SECTION -->
+    <div class="personas-section">
+      <h2>Who's joining?</h2>
+      <div class="personas-row" id="personaBubbles"></div>
+    </div>
+
+    <!-- AVAILABILITY GRID -->
+    <div class="card" id="gridCard">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span id="gridTitle">Select your availability</span>
+        <div id="saveStatus" class="save-status hidden" style="margin-left:auto;">
+          <span class="save-led" id="saveLed"></span>
+          <span id="saveLabel">Saved</span>
+        </div>
+      </div>
+      <p class="hint">Click or drag across slots when you're free</p>
+      <div class="grid-wrapper">
+        <div id="grid"></div>
+      </div>
+    </div>
+
+    <!-- TEAM OVERLAP -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00A699" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>
+        Team Availability
+      </div>
+      <div class="participant-chips" id="participantChips"></div>
+      <div id="noOverlap" class="muted hidden">No availability submitted yet — be the first!</div>
+      <div class="grid-wrapper">
+        <div id="overlapGrid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div id="sidePanel" class="side-panel">
+    <div class="side-panel-header">
+      <div class="side-panel-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00A699" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>
+        Team Availability
+      </div>
+      <button class="side-panel-close" onclick="togglePanel()">✕</button>
+    </div>
+    <div class="side-panel-chips" id="sidePanelChips"></div>
+    <div id="sidePanelEmpty" class="muted" style="padding:0 20px; display:none;">No availability yet.</div>
+    <div class="side-panel-grid-wrap">
+      <div id="sidePanelGrid"></div>
+    </div>
+  </div>
+
+  <!-- PANEL TOGGLE BUTTON -->
+  <button class="panel-toggle-btn" id="panelToggleBtn" onclick="togglePanel()" title="Team availability">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>
+    <span>Team</span>
+    <span class="panel-badge hidden" id="panelBadge">0</span>
+  </button>
+
+  <!-- REMOVE PERSONA MODAL -->
+  <div class="modal-overlay hidden" id="removePersonaModal">
+    <div class="modal" style="max-width:340px; text-align:center;">
+      <div style="font-size:2rem; margin-bottom:12px;">🗑️</div>
+      <h3>Remove <span id="removePersonaName"></span>?</h3>
+      <p style="margin-top:8px;">Their availability selection will be cleared. This can't be undone.</p>
+      <div class="modal-actions" style="margin-top:20px;">
+        <button class="btn-outline" onclick="cancelRemovePersona()">Keep them</button>
+        <button class="btn-primary" style="background:#FF385C;" onclick="doRemovePersona()">Yes, remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD PERSONA MODAL -->
+  <div class="modal-overlay hidden" id="addPersonaModal">
+    <div class="modal">
+      <h3>Add a person</h3>
+      <p>Enter a name to create a new availability slot</p>
+      <input type="text" id="personaNameInput" placeholder="e.g. Alex, Sarah, Team Lead…" maxlength="30" />
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="confirmAddPersona()">Add person</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am–8pm
+
+    const AVATAR_COLORS = ['#FF385C','#00A699','#FC642D','#4A90E2','#7B68EE','#E8A838','#F06292'];
+
+    const params    = new URLSearchParams(location.search);
+    const sessionId = params.get('id');
+    const meetLink  = params.get('meetLink');
+
+    // ---- State ----
+    let personas          = []; // { name, color }
+    let activePersona     = null;
+    let selected          = new Set();
+    let personaSelections = {}; // name → Set of slot strings
+    let serverParticipants = {}; // cached from last loadOverlap
+    let isDragging        = false;
+    let dragAdding        = true;
+
+    // ---- Init ----
+    document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
+
+    if (meetLink) {
+      const banner = document.getElementById('meetLinkBanner');
+      document.getElementById('meetLinkAnchor').href = decodeURIComponent(meetLink);
+      banner.classList.remove('hidden');
+    }
+
+    // Load session title
+    fetch(`/api/sessions/${sessionId}`)
+      .then(r => r.json())
+      .then(s => {
+        if (s.title) document.getElementById('sessionTitleInput').value = s.title;
+      });
+
+    // Update session title on blur/enter
+    const titleInput = document.getElementById('sessionTitleInput');
+    function saveTitle() {
+      fetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: titleInput.value.trim() }),
+      });
+    }
+    titleInput.addEventListener('blur', saveTitle);
+    titleInput.addEventListener('keydown', e => { if (e.key === 'Enter') titleInput.blur(); });
+
+    // ---- Copy link ----
+    function copyLink() {
+      navigator.clipboard.writeText(document.getElementById('shareLink').value);
+    }
+
+    // ---- Persona helpers ----
+    function getInitials(name) {
+      return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    }
+
+    function addPersona(name) {
+      if (!name) return;
+      dismissSplash();
+      const existing = personas.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (!existing) {
+        personas.push({ name, color: AVATAR_COLORS[personas.length % AVATAR_COLORS.length] });
+      }
+      setActivePersona(existing ? existing.name : name);
+    }
+
+    function setGridLocked(locked) {
+      const card = document.getElementById('gridCard');
+      card.style.opacity = locked ? '0.45' : '1';
+      card.style.pointerEvents = locked ? 'none' : '';
+      card.querySelector('.hint').textContent = locked
+        ? 'Select or add a person above to mark your availability'
+        : 'Click or drag across slots when you\'re free';
+    }
+
+    function setActivePersona(name) {
+      // Save current persona's selection before switching
+      if (activePersona) personaSelections[activePersona] = new Set(selected);
+
+      activePersona = name;
+      document.getElementById('gridTitle').textContent = `${name}'s availability`;
+
+      // Restore this persona's previously selected slots
+      selected = personaSelections[name] ? new Set(personaSelections[name]) : new Set();
+      document.querySelectorAll('.grid-cell').forEach(cell => {
+        const slot = cell.dataset.slot;
+        cell.classList.toggle('selected', selected.has(slot));
+      });
+
+      clearTimeout(saveTimer);
+      setSaveStatus('hidden');
+      setGridLocked(false);
+      renderPersonaBubbles();
+    }
+
+    function renderPersonaBubbles() {
+      const container = document.getElementById('personaBubbles');
+      container.innerHTML = '';
+
+      personas.forEach(persona => {
+        const wrap = document.createElement('div');
+        wrap.className = 'persona-bubble' + (persona.name === activePersona ? ' active' : '');
+        wrap.innerHTML = `
+          <div class="bubble-avatar" style="background:${persona.color}">
+            ${getInitials(persona.name)}
+            <button class="bubble-remove" title="Remove ${persona.name}">✕</button>
+          </div>
+          <span class="bubble-name">${persona.name}</span>
+        `;
+        wrap.querySelector('.bubble-remove').addEventListener('click', e => {
+          e.stopPropagation();
+          confirmRemovePersona(persona.name);
+        });
+        wrap.addEventListener('click', () => setActivePersona(persona.name));
+        container.appendChild(wrap);
+      });
+
+      // "+" add bubble
+      const addWrap = document.createElement('div');
+      addWrap.className = 'persona-bubble add-bubble';
+      addWrap.innerHTML = `
+        <div class="bubble-avatar add-avatar">+</div>
+        <span class="bubble-name">Add</span>
+      `;
+      addWrap.addEventListener('click', showAddModal);
+      container.appendChild(addWrap);
+    }
+
+    // ---- Modal ----
+    function showAddModal() {
+      document.getElementById('personaNameInput').value = '';
+      document.getElementById('addPersonaModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('personaNameInput').focus(), 80);
+    }
+
+    function closeModal() {
+      document.getElementById('addPersonaModal').classList.add('hidden');
+    }
+
+    function confirmAddPersona() {
+      const name = document.getElementById('personaNameInput').value.trim();
+      if (!name) return;
+      addPersona(name);
+      closeModal();
+    }
+
+    document.getElementById('personaNameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirmAddPersona();
+      if (e.key === 'Escape') closeModal();
+    });
+
+    document.getElementById('addPersonaModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('addPersonaModal')) closeModal();
+    });
+
+    // ---- Build availability grid ----
+    const grid = document.getElementById('grid');
+
+    const headerRow = document.createElement('div');
+    headerRow.className = 'grid-row';
+    headerRow.appendChild(Object.assign(document.createElement('div'), { className: 'grid-label' }));
+    DAYS.forEach(day => {
+      const el = document.createElement('div');
+      el.className = 'grid-day-header';
+      el.textContent = day;
+      headerRow.appendChild(el);
+    });
+    grid.appendChild(headerRow);
+
+    HOURS.forEach(hour => {
+      const row = document.createElement('div');
+      row.className = 'grid-row';
+
+      const label = document.createElement('div');
+      label.className = 'grid-label';
+      label.textContent = hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
+      row.appendChild(label);
+
+      DAYS.forEach(day => {
+        const cell = document.createElement('div');
+        const slotId = `${day}-${hour}`;
+        cell.className = 'grid-cell';
+        cell.dataset.slot = slotId;
+
+        cell.addEventListener('mousedown', e => {
+          e.preventDefault();
+          if (!activePersona) { showAddModal(); return; }
+          isDragging  = true;
+          dragAdding  = !selected.has(slotId);
+          toggle(cell, slotId);
+        });
+        cell.addEventListener('mouseenter', () => {
+          if (isDragging && activePersona) toggle(cell, slotId, dragAdding);
+        });
+
+        row.appendChild(cell);
+      });
+      grid.appendChild(row);
+    });
+
+    document.addEventListener('mouseup', () => { isDragging = false; });
+
+    function toggle(cell, slotId, forceAdd) {
+      if (forceAdd === undefined) {
+        if (selected.has(slotId)) { selected.delete(slotId); cell.classList.remove('selected'); }
+        else                      { selected.add(slotId);    cell.classList.add('selected'); }
+      } else if (forceAdd) {
+        selected.add(slotId); cell.classList.add('selected');
+      } else {
+        selected.delete(slotId); cell.classList.remove('selected');
+      }
+      previewOverlap();
+      scheduleSave();
+    }
+
+    function previewOverlap() {
+      if (!activePersona) return;
+      // Merge server data with current unsaved selection
+      const merged = { ...serverParticipants };
+      merged[activePersona] = [...selected];
+      renderOverlapPanels(merged);
+    }
+
+    // ---- Auto-save ----
+    let saveTimer = null;
+
+    function setSaveStatus(state) {
+      // state: 'saving' | 'saved' | 'hidden'
+      const el     = document.getElementById('saveStatus');
+      const led    = document.getElementById('saveLed');
+      const label  = document.getElementById('saveLabel');
+      if (state === 'hidden') { el.classList.add('hidden'); return; }
+      el.classList.remove('hidden');
+      led.className = 'save-led ' + state;
+      label.textContent = state === 'saving' ? 'Saving…' : 'Saved';
+    }
+
+    async function saveAvailability() {
+      if (!activePersona || selected.size === 0) return;
+      setSaveStatus('saving');
+      await fetch(`/api/sessions/${sessionId}/availability`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: activePersona, slots: [...selected] }),
+      });
+      setSaveStatus('saved');
+      loadOverlap();
+    }
+
+    function scheduleSave() {
+      if (!activePersona) return;
+      setSaveStatus('saving');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveAvailability, 900);
+    }
+
+    // ---- Load & render overlap ----
+    async function loadOverlap() {
+      const [sessionRes, overlapRes] = await Promise.all([
+        fetch(`/api/sessions/${sessionId}`).then(r => r.json()),
+        fetch(`/api/sessions/${sessionId}/overlap`).then(r => r.json()),
+      ]);
+
+      // Sync server participants to local personas + seed their saved slots
+      Object.entries(sessionRes.participants).forEach(([name, slots]) => {
+        if (!personas.find(p => p.name === name)) {
+          personas.push({ name, color: AVATAR_COLORS[personas.length % AVATAR_COLORS.length] });
+        }
+        // Seed from server; don't overwrite unsaved in-progress edits
+        if (!personaSelections[name]) {
+          personaSelections[name] = new Set(slots);
+        }
+      });
+
+      // If active persona's grid is stale vs server, refresh it
+      if (activePersona && sessionRes.participants[activePersona]) {
+        const serverSlots = new Set(sessionRes.participants[activePersona]);
+        // Only update if user hasn't made local changes on top
+        if (!personaSelections[activePersona] || personaSelections[activePersona].size === 0) {
+          personaSelections[activePersona] = serverSlots;
+          selected = new Set(serverSlots);
+          document.querySelectorAll('.grid-cell').forEach(cell => {
+            cell.classList.toggle('selected', selected.has(cell.dataset.slot));
+          });
+        }
+      }
+      renderPersonaBubbles();
+
+      // Cache server participants and render both panels
+      serverParticipants = {};
+      Object.entries(sessionRes.participants).forEach(([name, slots]) => {
+        serverParticipants[name] = slots;
+      });
+
+      // Merge in current unsaved selection for active persona
+      const merged = { ...serverParticipants };
+      if (activePersona) merged[activePersona] = [...selected];
+
+      renderOverlapPanels(merged);
+    }
+
+    // ---- Shared overlap renderer (bottom + side panel) ----
+    function renderOverlapPanels(participants) {
+      const names = Object.keys(participants);
+
+      // Compute overlap from participants map
+      const slotCounts = {};
+      const slotNamesMap = {};
+      names.forEach(name => {
+        (participants[name] || []).forEach(slot => {
+          slotCounts[slot] = (slotCounts[slot] || 0) + 1;
+          if (!slotNamesMap[slot]) slotNamesMap[slot] = [];
+          slotNamesMap[slot].push(name);
+        });
+      });
+      const total = names.length;
+      const hasData = total > 0 && Object.keys(slotCounts).length > 0;
+
+      // Chips (both panels)
+      const chipsHTML = names.map(n => {
+        const p = personas.find(x => x.name === n);
+        const color = p ? p.color : '#717171';
+        return `<span class="participant-chip">
+          <span class="chip-dot" style="background:${color}">${getInitials(n)}</span>${n}
+        </span>`;
+      }).join('');
+      document.getElementById('participantChips').innerHTML = chipsHTML;
+      document.getElementById('sidePanelChips').innerHTML = chipsHTML;
+
+      // Badge
+      const badge = document.getElementById('panelBadge');
+      if (names.length > 0) { badge.textContent = names.length; badge.classList.remove('hidden'); }
+      else { badge.classList.add('hidden'); }
+
+      // No data state
+      document.getElementById('noOverlap').classList.toggle('hidden', hasData);
+      document.getElementById('sidePanelEmpty').style.display = hasData ? 'none' : 'block';
+
+      if (!hasData) {
+        document.getElementById('overlapGrid').innerHTML = '';
+        document.getElementById('sidePanelGrid').innerHTML = '';
+        return;
+      }
+
+      buildOverlapGrid(document.getElementById('overlapGrid'),   slotCounts, slotNamesMap, names, total);
+      buildOverlapGrid(document.getElementById('sidePanelGrid'), slotCounts, slotNamesMap, names, total);
+    }
+
+    function buildOverlapGrid(container, slotCounts, slotNamesMap, allNames, total) {
+      container.innerHTML = '';
+
+      const hdr = document.createElement('div');
+      hdr.className = 'grid-row';
+      hdr.appendChild(Object.assign(document.createElement('div'), { className: 'grid-label' }));
+      DAYS.forEach(day => {
+        const el = document.createElement('div');
+        el.className = 'grid-day-header';
+        el.textContent = day;
+        hdr.appendChild(el);
+      });
+      container.appendChild(hdr);
+
+      HOURS.forEach(hour => {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+        const label = document.createElement('div');
+        label.className = 'grid-label';
+        label.textContent = hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
+        row.appendChild(label);
+
+        DAYS.forEach(day => {
+          const slotId = `${day}-${hour}`;
+          const cell = document.createElement('div');
+          cell.className = 'grid-cell overlap-cell';
+          const count = slotCounts[slotId];
+          if (count) {
+            const ratio = count / total;
+            const hue = Math.round(ratio * 120);
+            const alpha = 0.25 + ratio * 0.65;
+            cell.style.backgroundColor = `hsla(${hue}, 80%, 42%, ${alpha})`;
+            cell.style.borderColor = `hsla(${hue}, 80%, 35%, ${alpha + 0.1})`;
+
+            const freeNames = slotNamesMap[slotId] || [];
+            const busyNames = allNames.filter(n => !freeNames.includes(n));
+            const info = { count, total };
+            cell.addEventListener('mouseenter', e => showTooltip(e, freeNames, busyNames, info));
+            cell.addEventListener('mousemove',  e => moveTooltip(e));
+            cell.addEventListener('mouseleave', hideTooltip);
+
+            if (ratio === 1) {
+              cell.classList.add('full-overlap');
+              const btn = document.createElement('button');
+              btn.className = 'meet-btn';
+              btn.textContent = '📅';
+              btn.title = 'Create Google Meet at this time';
+              btn.onclick = () => { window.location.href = `/auth/google?sessionId=${sessionId}&slot=${slotId}`; };
+              cell.appendChild(btn);
+            }
+          }
+          row.appendChild(cell);
+        });
+        container.appendChild(row);
+      });
+    }
+
+    // ---- Tooltip ----
+    const tooltip = document.createElement('div');
+    tooltip.id = 'slotTooltip';
+    tooltip.style.cssText = `
+      position: fixed; z-index: 300; pointer-events: none;
+      background: #222222; color: #ffffff;
+      border-radius: 12px; padding: 12px 14px;
+      font-size: 0.82rem; line-height: 1.5;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      min-width: 140px; max-width: 220px;
+      opacity: 0; transition: opacity 0.12s;
+    `;
+    document.body.appendChild(tooltip);
+
+    function showTooltip(e, freeNames, busyNames, info) {
+      let html = '';
+      if (freeNames.length) {
+        html += `<div style="color:#4ade80;font-weight:600;margin-bottom:4px;">✓ Free (${freeNames.length})</div>`;
+        html += freeNames.map(n => {
+          const p = personas.find(x => x.name === n);
+          const c = p ? p.color : '#717171';
+          return `<div style="display:flex;align-items:center;gap:6px;padding:2px 0;">
+            <span style="width:18px;height:18px;border-radius:50%;background:${c};display:inline-flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;flex-shrink:0;">${getInitials(n)}</span>
+            ${n}
+          </div>`;
+        }).join('');
+      }
+      if (busyNames.length) {
+        html += `<div style="color:#f87171;font-weight:600;margin-top:8px;margin-bottom:4px;">✗ Busy (${busyNames.length})</div>`;
+        html += busyNames.map(n => {
+          const p = personas.find(x => x.name === n);
+          const c = p ? p.color : '#717171';
+          return `<div style="display:flex;align-items:center;gap:6px;padding:2px 0;opacity:0.7;">
+            <span style="width:18px;height:18px;border-radius:50%;background:${c};display:inline-flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:700;flex-shrink:0;">${getInitials(n)}</span>
+            ${n}
+          </div>`;
+        }).join('');
+      }
+      tooltip.innerHTML = html;
+      tooltip.style.opacity = '1';
+      moveTooltip(e);
+    }
+
+    function moveTooltip(e) {
+      const x = e.clientX + 14;
+      const y = e.clientY - 10;
+      const tw = tooltip.offsetWidth;
+      const th = tooltip.offsetHeight;
+      tooltip.style.left = (x + tw > window.innerWidth - 8 ? e.clientX - tw - 14 : x) + 'px';
+      tooltip.style.top  = (y + th > window.innerHeight - 8 ? e.clientY - th - 10 : y) + 'px';
+    }
+
+    function hideTooltip() { tooltip.style.opacity = '0'; }
+
+    // ---- Splash tutorial bubble ----
+    function showSplashBubble() {
+      const splash = document.createElement('div');
+      splash.id = 'splashBubble';
+      splash.innerHTML = `
+        <div class="splash-inner">
+          <span class="splash-emoji">👆</span>
+          <strong>Start here</strong>
+          <p>Add yourself to pick your availability</p>
+          <button class="splash-close" onclick="dismissSplash()">dismiss</button>
+        </div>
+      `;
+
+      const section = document.getElementById('personaBubbles').parentElement;
+      section.style.position = 'relative';
+      section.appendChild(splash);
+
+      requestAnimationFrame(() => {
+        const row    = document.getElementById('personaBubbles');
+        const addBub = row.lastElementChild;
+        const bubRect  = addBub.getBoundingClientRect();
+        const secRect  = section.getBoundingClientRect();
+        const sw = splash.offsetWidth;
+
+        // Center above the "+" bubble
+        let left = (bubRect.left - secRect.left) + bubRect.width / 2 - sw / 2;
+        // Clamp to section bounds with padding
+        left = Math.max(8, Math.min(left, secRect.width - sw - 8));
+        const top = (bubRect.bottom - secRect.top) + 10;
+
+        splash.style.left = left + 'px';
+        splash.style.top  = top + 'px';
+      });
+    }
+
+    // ---- Remove persona ----
+    function confirmRemovePersona(name) {
+      const modal = document.getElementById('removePersonaModal');
+      document.getElementById('removePersonaName').textContent = name;
+      modal.dataset.target = name;
+      modal.classList.remove('hidden');
+    }
+
+    window.doRemovePersona = function() {
+      const name = document.getElementById('removePersonaModal').dataset.target;
+      personas = personas.filter(p => p.name !== name);
+      delete personaSelections[name];
+      if (activePersona === name) {
+        activePersona = null;
+        selected = new Set();
+        document.querySelectorAll('.grid-cell').forEach(c => c.classList.remove('selected'));
+        document.getElementById('gridTitle').textContent = 'Select your availability';
+        setGridLocked(true);
+      }
+      document.getElementById('removePersonaModal').classList.add('hidden');
+      renderPersonaBubbles();
+    };
+
+    window.cancelRemovePersona = function() {
+      document.getElementById('removePersonaModal').classList.add('hidden');
+    };
+
+    // ---- Side panel ----
+    let panelOpen = false;
+
+    window.togglePanel = function() {
+      panelOpen = !panelOpen;
+      document.getElementById('sidePanel').classList.toggle('open', panelOpen);
+      document.getElementById('panelToggleBtn').classList.toggle('active', panelOpen);
+    };
+
+    window.dismissSplash = function() {
+      const el = document.getElementById('splashBubble');
+      if (el) { el.style.animation = 'splash-out 0.2s ease forwards'; setTimeout(() => el.remove(), 200); }
+    };
+
+    // ---- Boot ----
+    setGridLocked(true);
+    renderPersonaBubbles();
+    loadOverlap();
+    setInterval(loadOverlap, 10000);
+    setTimeout(showSplashBubble, 400);
+  </script>
+</body>
+</html>
