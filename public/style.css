@@ -223,27 +223,6 @@ body {
   outline: none;
 }
 
-/* ---- MEET BANNER ---- */
-.meet-banner {
-  background: #F0FFF8;
-  border: 1.5px solid #00A699;
-  border-radius: 12px;
-  padding: 14px 20px;
-  margin-bottom: 24px;
-  font-size: 0.95rem;
-  color: #007A6E;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.meet-banner a {
-  color: #00A699;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.meet-banner a:hover { text-decoration: underline; }
 
 /* ---- PAGE WRAPPER ---- */
 .page-wrap {
@@ -479,18 +458,6 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   /* border set dynamically via JS hue */
 }
 
-.meet-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0;
-  line-height: 1;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.full-overlap:hover .meet-btn { opacity: 1; }
 
 /* ---- PARTICIPANT CHIPS ---- */
 .participant-chips {
@@ -550,8 +517,15 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 .ai-import-modal {
   max-width: 680px;
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-import-body {
+  overflow-y: auto;
+  flex: 1;
 }
 
 .ai-import-header {

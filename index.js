@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { google } = require('googleapis');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -69,73 +68,6 @@ app.get('/api/sessions/:id/overlap', (req, res) => {
   res.json({ overlap });
 });
 
-// --- Google OAuth routes ---
-
-function getOAuthClient() {
-  return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI || `http://localhost:${PORT}/auth/callback`
-  );
-}
-
-app.get('/auth/google', (req, res) => {
-  const { sessionId, slot } = req.query;
-  const oauth2Client = getOAuthClient();
-  const url = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: ['https://www.googleapis.com/auth/calendar.events'],
-    state: JSON.stringify({ sessionId, slot }),
-  });
-  res.redirect(url);
-});
-
-app.get('/auth/callback', async (req, res) => {
-  const { code, state } = req.query;
-  const { sessionId, slot } = JSON.parse(state);
-  const oauth2Client = getOAuthClient();
-
-  try {
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-
-    const session = sessions[sessionId];
-    const [day, hour] = slot.split('-');
-    const hourInt = parseInt(hour);
-
-    // Map day name to next occurrence date
-    const dayMap = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 0 };
-    const today = new Date();
-    const targetDay = dayMap[day];
-    const diff = (targetDay - today.getDay() + 7) % 7 || 7;
-    const meetDate = new Date(today);
-    meetDate.setDate(today.getDate() + diff);
-    meetDate.setHours(hourInt, 0, 0, 0);
-
-    const endDate = new Date(meetDate);
-    endDate.setHours(hourInt + 1);
-
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-    const event = await calendar.events.insert({
-      calendarId: 'primary',
-      conferenceDataVersion: 1,
-      requestBody: {
-        summary: session?.title || 'Team Meeting',
-        start: { dateTime: meetDate.toISOString() },
-        end: { dateTime: endDate.toISOString() },
-        conferenceData: {
-          createRequest: { requestId: uuidv4() },
-        },
-      },
-    });
-
-    const meetLink = event.data.conferenceData?.entryPoints?.[0]?.uri || event.data.htmlLink;
-    res.redirect(`/session.html?id=${sessionId}&meetLink=${encodeURIComponent(meetLink)}`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Failed to create meeting: ' + err.message);
-  }
-});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

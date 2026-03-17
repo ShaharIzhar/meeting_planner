@@ -24,11 +24,6 @@
 
   <div class="page-wrap">
 
-    <!-- MEET BANNER -->
-    <div id="meetLinkBanner" class="meet-banner hidden">
-      🎉 Meeting created!&nbsp; <a id="meetLinkAnchor" href="#" target="_blank">Join Google Meet →</a>
-    </div>
-
     <!-- PERSONAS SECTION -->
     <div class="personas-section">
       <h2>Who's joining?</h2>
@@ -40,18 +35,18 @@
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span id="gridTitle">Select your availability</span>
-        <div id="saveStatus" class="save-status hidden" style="margin-left:auto;">
-          <span class="save-led" id="saveLed"></span>
-          <span id="saveLabel">Saved</span>
+        <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+          <div id="saveStatus" class="save-status hidden">
+            <span class="save-led" id="saveLed"></span>
+            <span id="saveLabel">Saved</span>
+          </div>
+          <button class="ai-import-btn" onclick="openAiImport()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            Import from AI
+          </button>
         </div>
       </div>
-      <div class="grid-hint-row" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-        <p class="hint" style="margin-bottom:0;">Click or drag across slots when you're free</p>
-        <button class="ai-import-btn" onclick="openAiImport()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-          Import from AI
-        </button>
-      </div>
+      <p class="hint" style="margin-bottom:16px;">Click or drag across slots when you're free</p>
       <div class="grid-wrapper">
         <div id="grid"></div>
       </div>
@@ -106,9 +101,10 @@
         <button class="splash-close" style="font-size:0.9rem; margin-top:0;" onclick="closeAiImport()">✕</button>
       </div>
 
+      <div class="ai-import-body">
       <div class="ai-step">
         <div class="ai-step-label"><span class="ai-step-num">1</span> Copy this prompt into Claude or Gemini</div>
-        <div class="ai-prompt-box" id="aiPromptBox">List all my busy times for the upcoming week (Mon–Sun) between 8am and 9pm. Use this exact format only, one entry per line:
+        <div class="ai-prompt-box" id="aiPromptBox">List all my busy times for the upcoming week (Sun–Sat) between 8am and 9pm. Use this exact format only, one entry per line:
 
 Day StartTime - EndTime
 
@@ -127,6 +123,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       <div class="ai-step">
         <div class="ai-step-label"><span class="ai-step-num">2</span> Paste the AI's response here</div>
         <textarea id="aiPasteArea" class="ai-paste-area" placeholder="Mon 9am - 11am&#10;Tue 2pm - 4pm&#10;Wed 10am - 12pm&#10;..."></textarea>
+      </div>
       </div>
 
       <div class="ai-import-footer">
@@ -166,14 +163,13 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
   </div>
 
   <script>
-    const DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8am–8pm
+    const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8am–9pm
 
     const AVATAR_COLORS = ['#FF385C','#00A699','#FC642D','#4A90E2','#7B68EE','#E8A838','#F06292'];
 
     const params    = new URLSearchParams(location.search);
     const sessionId = params.get('id');
-    const meetLink  = params.get('meetLink');
 
     // ---- State ----
     let personas          = []; // { name, color }
@@ -187,11 +183,6 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     // ---- Init ----
     document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
 
-    if (meetLink) {
-      const banner = document.getElementById('meetLinkBanner');
-      document.getElementById('meetLinkAnchor').href = decodeURIComponent(meetLink);
-      banner.classList.remove('hidden');
-    }
 
     // Load session title
     fetch(`/api/sessions/${sessionId}`)
@@ -212,9 +203,33 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     titleInput.addEventListener('blur', saveTitle);
     titleInput.addEventListener('keydown', e => { if (e.key === 'Enter') titleInput.blur(); });
 
+    // ---- Toast ----
+    function showToast(msg) {
+      const existing = document.getElementById('copyToast');
+      if (existing) existing.remove();
+      const toast = document.createElement('div');
+      toast.id = 'copyToast';
+      toast.textContent = msg;
+      toast.style.cssText = `
+        position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+        background: #22c55e; color: #fff; font-size: 0.85rem; font-weight: 600;
+        padding: 10px 20px; border-radius: 100px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        z-index: 9999; opacity: 0; transition: opacity 0.2s;
+        white-space: nowrap;
+      `;
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => { toast.style.opacity = '1'; });
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 200);
+      }, 2000);
+    }
+
     // ---- Copy link ----
     function copyLink() {
       navigator.clipboard.writeText(document.getElementById('shareLink').value);
+      showToast('✓ Link copied!');
     }
 
     // ---- Persona helpers ----
@@ -584,12 +599,6 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
             if (ratio === 1) {
               cell.classList.add('full-overlap');
-              const btn = document.createElement('button');
-              btn.className = 'meet-btn';
-              btn.textContent = '📅';
-              btn.title = 'Create Google Meet at this time';
-              btn.onclick = () => { window.location.href = `/auth/google?sessionId=${sessionId}&slot=${slotId}`; };
-              cell.appendChild(btn);
             }
           }
           row.appendChild(cell);
@@ -727,8 +736,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     window.openAiImport = function() {
       if (!activePersona) { showAddModal(); return; }
       document.getElementById('aiPasteArea').value = '';
-      document.getElementById('aiCopyBtn').textContent = 'Copy prompt';
-      document.getElementById('aiImportModal').classList.remove('hidden');
+document.getElementById('aiImportModal').classList.remove('hidden');
     };
 
     window.closeAiImport = function() {
@@ -741,9 +749,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
     window.copyPrompt = function() {
       navigator.clipboard.writeText(document.getElementById('aiPromptBox').textContent.trim());
-      const btn = document.getElementById('aiCopyBtn');
-      btn.innerHTML = '✓ Copied!';
-      setTimeout(() => { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy prompt'; }, 2000);
+      showToast('✓ Prompt copied!');
     };
 
     window.applyAiImport = function() {
@@ -768,25 +774,28 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
     function parseBusyTimes(text) {
       const DAY_MAP = {
-        mon: 'Mon', monday: 'Mon',
-        tue: 'Tue', tuesday: 'Tue',
-        wed: 'Wed', wednesday: 'Wed',
-        thu: 'Thu', thursday: 'Thu',
-        fri: 'Fri', friday: 'Fri',
-        sat: 'Sat', saturday: 'Sat',
-        sun: 'Sun', sunday: 'Sun',
+        sunday: 'Sun',    saturday: 'Sat',
+        monday: 'Mon',    tuesday: 'Tue',
+        wednesday: 'Wed', thursday: 'Thu',
+        friday: 'Fri',
+        sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed',
+        thu: 'Thu', fri: 'Fri', sat: 'Sat',
       };
+      // Sort longest keys first so "saturday" matches before "sat", "sunday" before "sun"
+      const DAY_KEYS = Object.keys(DAY_MAP).sort((a, b) => b.length - a.length);
       const busy = new Set();
 
       text.split('\n').forEach(line => {
         line = line.trim();
         if (!line) return;
 
-        // Find day
+        // Find day — match whole word at start of line
         let day = null;
         const lower = line.toLowerCase();
-        for (const [key, val] of Object.entries(DAY_MAP)) {
-          if (lower.startsWith(key)) { day = val; break; }
+        for (const key of DAY_KEYS) {
+          if (lower.startsWith(key) && (lower[key.length] === undefined || /\W/.test(lower[key.length]))) {
+            day = DAY_MAP[key]; break;
+          }
         }
         if (!day) return;
 
@@ -808,7 +817,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         if (eh <= sh) eh += 12; // e.g. 10 - 2 → 10am - 2pm
 
         for (let h = sh; h < eh; h++) {
-          if (h >= 8 && h <= 20) busy.add(`${day}-${h}`);
+          if (h >= 8 && h <= 21) busy.add(`${day}-${h}`);
         }
       });
 
@@ -823,9 +832,10 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     // ---- Boot ----
     setGridLocked(true);
     renderPersonaBubbles();
-    loadOverlap();
+    loadOverlap().then(() => {
+      if (personas.length === 0) setTimeout(showSplashBubble, 400);
+    });
     setInterval(loadOverlap, 10000);
-    setTimeout(showSplashBubble, 400);
   </script>
 </body>
 </html>
