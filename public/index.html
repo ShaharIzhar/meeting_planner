@@ -11,7 +11,8 @@
     <a class="nav-logo" href="/">meet<span>sync</span></a>
   </nav>
 
-  <div class="hero">
+  <canvas id="dotsCanvas" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+  <div class="hero" style="position:relative;z-index:1;">
     <div class="hero-badge">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
       Free &amp; no sign-up required
@@ -43,6 +44,49 @@
   </div>
 
   <script>
+    // ---- Background dots ----
+    const canvas = document.getElementById('dotsCanvas');
+    const ctx = canvas.getContext('2d');
+    const DOT_COUNT = 38;
+    let dots = [];
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    for (let i = 0; i < DOT_COUNT; i++) {
+      dots.push({
+        x:     Math.random() * canvas.width,
+        y:     Math.random() * canvas.height,
+        r:     2 + Math.random() * 3,
+        vx:    (Math.random() - 0.5) * 0.8,
+        vy:    (Math.random() - 0.5) * 0.8,
+        alpha: 0.08 + Math.random() * 0.18,
+        hue:   Math.random() < 0.5 ? 350 : 220, // pink or blue
+      });
+    }
+
+    function drawDots() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      dots.forEach(d => {
+        d.x += d.vx;
+        d.y += d.vy;
+        if (d.x < -10) d.x = canvas.width + 10;
+        if (d.x > canvas.width + 10) d.x = -10;
+        if (d.y < -10) d.y = canvas.height + 10;
+        if (d.y > canvas.height + 10) d.y = -10;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${d.hue}, 80%, 60%, ${d.alpha})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(drawDots);
+    }
+    drawDots();
+
     document.getElementById('createBtn').addEventListener('click', async () => {
       const res = await fetch('/api/sessions', {
         method: 'POST',

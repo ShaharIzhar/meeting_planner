@@ -16,7 +16,7 @@ const sessions = {};
 app.post('/api/sessions', (req, res) => {
   const { title } = req.body;
   const id = uuidv4().slice(0, 8);
-  sessions[id] = { id, title: title || 'Meeting', participants: {} };
+  sessions[id] = { id, title: title || '', participants: {} };
   res.json({ id });
 });
 

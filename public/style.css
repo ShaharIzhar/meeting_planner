@@ -6,7 +6,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Circular', 'Segoe UI', Roboto, sans-serif;
-  background: #f7f7f7;
+  background: #ffffff;
   color: #222222;
   min-height: 100vh;
 }
@@ -35,23 +35,43 @@ body {
 
 .nav-logo span { color: #222222; }
 
-.session-title-input {
-  border: 1.5px solid #ebebeb;
-  background: #f7f7f7;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #222222;
-  text-align: left;
-  outline: none;
-  width: 240px;
-  padding: 7px 12px;
-  border-radius: 8px;
-  transition: border-color 0.15s, background 0.15s;
+.title-input-wrap {
+  position: relative;
+  display: inline-block;
 }
 
-.session-title-input:hover { background: #f0f0f0; border-color: #dddddd; }
-.session-title-input:focus { background: #fff; border-color: #222222; }
-.session-title-input::placeholder { color: #b0b0b0; font-weight: 400; }
+.session-title-input {
+  border: none !important;
+  border-bottom: 1.5px solid #e0e0e0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #222222;
+  text-align: center;
+  outline: none;
+  width: 340px !important;
+  padding: 4px 4px 6px !important;
+  border-radius: 0 !important;
+  transition: border-color 0.2s;
+}
+
+.session-title-input:hover { border-bottom-color: #b0b0b0 !important; }
+.session-title-input:focus { border-bottom-color: #FF385C !important; box-shadow: none !important; }
+
+.title-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  pointer-events: none;
+  color: #c0c0c0;
+  font-size: 0.88rem;
+  font-weight: 400;
+  white-space: nowrap;
+  transition: opacity 0.5s ease;
+  opacity: 0;
+}
 
 .nav-actions {
   display: flex;
@@ -70,7 +90,7 @@ body {
   padding: 24px;
   padding-bottom: 80px;
   text-align: center;
-  background: #ffffff;
+  background: transparent;
 }
 
 .hero-badge {
@@ -199,6 +219,20 @@ body {
 }
 
 /* ---- SHARE BOX ---- */
+.share-box-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.share-box-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #222222;
+  white-space: nowrap;
+}
+
 .share-box {
   display: flex;
   align-items: center;
@@ -232,10 +266,24 @@ body {
 }
 
 .title-row {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.title-label-head {
+  position: absolute;
+  right: calc(50% + 170px + 10px);
+  bottom: -16px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #717171;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  margin: 0;
+  line-height: 1;
 }
 
 .title-label {
@@ -895,7 +943,9 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   .nav-actions .share-box input { display: none; }
   .page-wrap { padding: 16px 12px 80px; }
   .personas-section { padding: 8px 0 14px; }
-  .session-title-input { width: 180px; font-size: 0.85rem; }
+  .title-row { flex-direction: column; gap: 8px; }
+  .title-label-head { position: static; }
+  .session-title-input { width: 260px !important; }
   .personas-section h2 { font-size: 0.85rem; margin-bottom: 18px; }
   .bubble-avatar { width: 54px; height: 54px; font-size: 1rem; }
   .personas-row { gap: 14px; }

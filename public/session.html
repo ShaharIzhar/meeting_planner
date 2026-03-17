@@ -12,9 +12,12 @@
   <nav class="nav">
     <a class="nav-logo" href="/">meet<span>sync</span></a>
     <div class="nav-actions">
-      <div class="share-box">
-        <input type="text" id="shareLink" readonly style="width:170px;" />
-        <button class="btn-outline btn-sm" onclick="copyLink()">Copy link</button>
+      <div class="share-box-wrap">
+        <span class="share-box-label">Invite others:</span>
+        <div class="share-box">
+          <input type="text" id="shareLink" readonly style="width:170px;" />
+          <button class="btn-outline btn-sm" onclick="copyLink()">Copy link</button>
+        </div>
       </div>
     </div>
   </nav>
@@ -24,8 +27,11 @@
     <!-- PERSONAS SECTION -->
     <div class="personas-section">
       <div class="title-row">
-        <label class="title-label">Meeting Title</label>
-        <input type="text" id="sessionTitleInput" class="session-title-input" placeholder="e.g. Team Sync" maxlength="60" />
+        <h2 class="title-label-head">Meeting Title</h2>
+        <div class="title-input-wrap">
+          <input type="text" id="sessionTitleInput" class="session-title-input" maxlength="60" />
+          <span class="title-placeholder" id="titlePlaceholder"></span>
+        </div>
       </div>
       <h2>Who's joining?</h2>
       <div class="personas-row" id="personaBubbles"></div>
@@ -203,6 +209,43 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     }
     titleInput.addEventListener('blur', saveTitle);
     titleInput.addEventListener('keydown', e => { if (e.key === 'Enter') titleInput.blur(); });
+
+    // ---- Rotating placeholder ----
+    const PLACEHOLDERS = [
+      'Why we could\'ve just used email',
+      'The meeting about the meeting',
+      'Things we\'ll forget by tomorrow',
+      'Agreeing on what we agreed last time',
+      'Pretending we need this meeting',
+      'Status update nobody asked for',
+      'Talking about talking',
+      'The 4th reschedule this month',
+      'Figuring out what we\'re figuring out',
+      'Please just pick a time 😭',
+    ];
+    const phEl = document.getElementById('titlePlaceholder');
+    let phIndex = 0;
+
+    function updatePhVisibility() {
+      phEl.style.opacity = (titleInput.value || document.activeElement === titleInput) ? '0' : '1';
+    }
+    titleInput.addEventListener('input', updatePhVisibility);
+    titleInput.addEventListener('focus', updatePhVisibility);
+    titleInput.addEventListener('blur', updatePhVisibility);
+
+    function cyclePlaceholder() {
+      if (titleInput.value || document.activeElement === titleInput) return;
+      phEl.style.opacity = '0';
+      setTimeout(() => {
+        phIndex = (phIndex + 1) % PLACEHOLDERS.length;
+        phEl.textContent = PLACEHOLDERS[phIndex];
+        phEl.style.opacity = '1';
+      }, 500);
+    }
+    // Show first placeholder immediately, then cycle
+    phEl.textContent = PLACEHOLDERS[0];
+    phEl.style.opacity = '1';
+    setInterval(cyclePlaceholder, 3500);
 
     // ---- Toast ----
     function showToast(msg) {
