@@ -732,11 +732,10 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
         let left, top;
         if (isMobile) {
-          // Position to the right of the "+" bubble
-          left = (bubRect.right - secRect.left) + 10;
-          top  = (bubRect.top - secRect.top) + bubRect.height / 2 - splash.offsetHeight / 2;
-          // If it overflows right, flip to left
-          if (left + sw > secRect.width - 8) left = (bubRect.left - secRect.left) - sw - 10;
+          // Position below the "+" bubble, centered
+          left = (bubRect.left - secRect.left) + bubRect.width / 2 - sw / 2;
+          left = Math.max(8, Math.min(left, secRect.width - sw - 8));
+          top  = (bubRect.bottom - secRect.top) + 10;
         } else {
           // Center below the "+" bubble (desktop)
           left = (bubRect.left - secRect.left) + bubRect.width / 2 - sw / 2;

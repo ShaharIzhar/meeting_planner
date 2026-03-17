@@ -18,7 +18,7 @@
       Free &amp; no sign-up required
     </div>
 
-    <h1>Find a time that<br/>works for <em>everyone.</em></h1>
+    <h1>Find a time that<br/>works <em id="typedText"></em></h1>
     <p>Share your availability and see where everyone's schedules overlap — instantly.</p>
 
     <div class="hero-cta">
@@ -86,6 +86,47 @@
       requestAnimationFrame(drawDots);
     }
     drawDots();
+
+    // ---- Typewriter ----
+    const PHRASES = ['for everyone.', 'with everyone.', 'to all.'];
+    const typedEl = document.getElementById('typedText');
+    let pIdx = 0, charIdx = 0, deleting = false;
+
+    // Lock width to widest phrase so "works" never moves
+    const measurer = document.createElement('span');
+    measurer.style.cssText = 'position:absolute;visibility:hidden;font-size:3rem;font-weight:700;white-space:nowrap;';
+    document.body.appendChild(measurer);
+    let maxW = 0;
+    PHRASES.forEach(p => { measurer.textContent = p; maxW = Math.max(maxW, measurer.offsetWidth); });
+    measurer.remove();
+    typedEl.style.display = 'inline-block';
+    typedEl.style.minWidth = maxW + 'px';
+    typedEl.style.textAlign = 'left';
+
+    function type() {
+      const phrase = PHRASES[pIdx];
+      if (!deleting) {
+        charIdx++;
+        typedEl.textContent = phrase.slice(0, charIdx);
+        if (charIdx === phrase.length) {
+          deleting = true;
+          setTimeout(type, 2200);
+          return;
+        }
+        setTimeout(type, 75);
+      } else {
+        charIdx--;
+        typedEl.textContent = phrase.slice(0, charIdx);
+        if (charIdx === 0) {
+          deleting = false;
+          pIdx = (pIdx + 1) % PHRASES.length;
+          setTimeout(type, 300);
+          return;
+        }
+        setTimeout(type, 40);
+      }
+    }
+    type();
 
     document.getElementById('createBtn').addEventListener('click', async () => {
       const res = await fetch('/api/sessions', {
