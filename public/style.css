@@ -573,7 +573,7 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 }
 
 .ai-import-modal {
-  max-width: 680px;
+  max-width: 820px;
   padding: 0;
   overflow: hidden;
   max-height: calc(100vh - 40px);
