@@ -45,7 +45,13 @@
           <span id="saveLabel">Saved</span>
         </div>
       </div>
-      <p class="hint">Click or drag across slots when you're free</p>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <p class="hint" style="margin-bottom:0;">Click or drag across slots when you're free</p>
+        <button class="ai-import-btn" onclick="openAiImport()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          Import from AI
+        </button>
+      </div>
       <div class="grid-wrapper">
         <div id="grid"></div>
       </div>
@@ -88,6 +94,50 @@
     <span>Team</span>
     <span class="panel-badge hidden" id="panelBadge">0</span>
   </button>
+
+  <!-- AI IMPORT MODAL -->
+  <div class="modal-overlay hidden" id="aiImportModal">
+    <div class="modal ai-import-modal">
+      <div class="ai-import-header">
+        <div>
+          <h3>Import busy times from AI</h3>
+          <p>Use Claude or Gemini (with calendar access) to get your busy times, then paste the result below.</p>
+        </div>
+        <button class="splash-close" style="font-size:0.9rem; margin-top:0;" onclick="closeAiImport()">✕</button>
+      </div>
+
+      <div class="ai-step">
+        <div class="ai-step-label"><span class="ai-step-num">1</span> Copy this prompt into Claude or Gemini</div>
+        <div class="ai-prompt-box" id="aiPromptBox">List all my busy times for the upcoming week (Mon–Sun) between 8am and 8pm. Use this exact format only, one entry per line:
+
+Day StartTime - EndTime
+
+Example:
+Mon 9am - 11am
+Wed 2pm - 4pm
+Fri 10am - 12pm
+
+Only include times when I am NOT free (busy/blocked). Use the hours I actually have events. Do not include explanations.</div>
+        <button class="ai-copy-btn" id="aiCopyBtn" onclick="copyPrompt()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy prompt
+        </button>
+      </div>
+
+      <div class="ai-step">
+        <div class="ai-step-label"><span class="ai-step-num">2</span> Paste the AI's response here</div>
+        <textarea id="aiPasteArea" class="ai-paste-area" placeholder="Mon 9am - 11am&#10;Tue 2pm - 4pm&#10;Wed 10am - 12pm&#10;..."></textarea>
+      </div>
+
+      <div class="ai-import-footer">
+        <span class="ai-import-note">Everything <em>not</em> marked busy will be set as your free time</span>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-outline" onclick="closeAiImport()">Cancel</button>
+          <button class="btn-primary" onclick="applyAiImport()">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- REMOVE PERSONA MODAL -->
   <div class="modal-overlay hidden" id="removePersonaModal">
@@ -645,6 +695,98 @@
       document.getElementById('sidePanel').classList.toggle('open', panelOpen);
       document.getElementById('panelToggleBtn').classList.toggle('active', panelOpen);
     };
+
+    // ---- AI Import ----
+    window.openAiImport = function() {
+      if (!activePersona) { showAddModal(); return; }
+      document.getElementById('aiPasteArea').value = '';
+      document.getElementById('aiCopyBtn').textContent = 'Copy prompt';
+      document.getElementById('aiImportModal').classList.remove('hidden');
+    };
+
+    window.closeAiImport = function() {
+      document.getElementById('aiImportModal').classList.add('hidden');
+    };
+
+    document.getElementById('aiImportModal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('aiImportModal')) closeAiImport();
+    });
+
+    window.copyPrompt = function() {
+      navigator.clipboard.writeText(document.getElementById('aiPromptBox').textContent.trim());
+      const btn = document.getElementById('aiCopyBtn');
+      btn.innerHTML = '✓ Copied!';
+      setTimeout(() => { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy prompt'; }, 2000);
+    };
+
+    window.applyAiImport = function() {
+      const text = document.getElementById('aiPasteArea').value;
+      if (!text.trim()) return;
+      const busySlots = parseBusyTimes(text);
+
+      // Mark everything NOT busy as selected (free)
+      selected = new Set();
+      document.querySelectorAll('.grid-cell').forEach(cell => {
+        const slot = cell.dataset.slot;
+        const isFree = !busySlots.has(slot);
+        cell.classList.toggle('selected', isFree);
+        if (isFree) selected.add(slot);
+      });
+
+      personaSelections[activePersona] = new Set(selected);
+      previewOverlap();
+      scheduleSave();
+      closeAiImport();
+    };
+
+    function parseBusyTimes(text) {
+      const DAY_MAP = {
+        mon: 'Mon', monday: 'Mon',
+        tue: 'Tue', tuesday: 'Tue',
+        wed: 'Wed', wednesday: 'Wed',
+        thu: 'Thu', thursday: 'Thu',
+        fri: 'Fri', friday: 'Fri',
+        sat: 'Sat', saturday: 'Sat',
+        sun: 'Sun', sunday: 'Sun',
+      };
+      const busy = new Set();
+
+      text.split('\n').forEach(line => {
+        line = line.trim();
+        if (!line) return;
+
+        // Find day
+        let day = null;
+        const lower = line.toLowerCase();
+        for (const [key, val] of Object.entries(DAY_MAP)) {
+          if (lower.startsWith(key)) { day = val; break; }
+        }
+        if (!day) return;
+
+        // Match time range: 9am - 11am, 9:00 - 11:00, 14:00 - 16:00
+        const m = line.match(/(\d{1,2})(?::\d{2})?\s*(am|pm)?\s*[-–to]+\s*(\d{1,2})(?::\d{2})?\s*(am|pm)?/i);
+        if (!m) return;
+
+        let sh = parseInt(m[1]), sm = (m[2] || '').toLowerCase();
+        let eh = parseInt(m[3]), em = (m[4] || m[2] || '').toLowerCase();
+
+        // Normalize to 24h
+        if (sm === 'pm' && sh !== 12) sh += 12;
+        if (sm === 'am' && sh === 12) sh = 0;
+        if (em === 'pm' && eh !== 12) eh += 12;
+        if (em === 'am' && eh === 12) eh = 0;
+        // Heuristic: no meridiem + hour < 8 → assume PM (office hours)
+        if (!sm && sh < 8) sh += 12;
+        if (!em && eh < 8 && eh > 0) eh += 12;
+        if (eh <= sh) eh += 12; // e.g. 10 - 2 → 10am - 2pm
+
+        for (let h = sh; h < eh; h++) {
+          if (h >= 8 && h <= 20) busy.add(`${day}-${h}`);
+        }
+      });
+
+      return busy;
+    }
 
     window.dismissSplash = function() {
       const el = document.getElementById('splashBubble');
