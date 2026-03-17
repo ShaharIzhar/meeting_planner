@@ -548,9 +548,10 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 }
 
 .ai-import-modal {
-  max-width: 520px;
+  max-width: 680px;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 40px);
 }
 
 .ai-import-header {
@@ -781,10 +782,11 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   inset: 0;
   background: rgba(0,0,0,0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 200;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal {
@@ -904,25 +906,47 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 
 /* ---- MOBILE ---- */
 @media (max-width: 640px) {
-  .nav { padding: 0 14px; gap: 8px; }
-  .nav-title-input { width: 140px; font-size: 0.88rem; }
+  .nav { padding: 0 14px; gap: 8px; height: 56px; }
+  .nav-title-input { width: 130px; font-size: 0.85rem; }
   .nav-actions .share-box input { display: none; }
-  .page-wrap { padding: 20px 12px 60px; }
-  .personas-section { padding: 24px 0 16px; }
-  .bubble-avatar { width: 52px; height: 52px; font-size: 1rem; }
-  .personas-row { gap: 12px; }
-  .card { padding: 18px 14px; border-radius: 12px; }
+  .page-wrap { padding: 16px 12px 80px; }
+  .personas-section { padding: 20px 0 14px; }
+  .personas-section h2 { font-size: 0.85rem; margin-bottom: 18px; }
+  .bubble-avatar { width: 54px; height: 54px; font-size: 1rem; }
+  .personas-row { gap: 14px; }
+  .card { padding: 16px 12px; border-radius: 12px; }
+  .card-title { font-size: 1rem; margin-bottom: 14px; }
   .hero h1 { font-size: 2rem; }
   #grid, #overlapGrid { min-width: 420px; }
-  .grid-cell { height: 26px; }
-  .modal { padding: 28px 20px 22px; }
+  .grid-cell { height: 34px; border-radius: 4px; } /* bigger for touch */
+  .grid-label { font-size: 0.7rem; padding-right: 6px; }
+  .modal { padding: 24px 18px 20px; }
+  .hint { font-size: 0.8rem; }
+  .ai-import-btn { font-size: 0.75rem; padding: 6px 10px; }
+
+  /* AI import modal full-width on mobile */
+  .ai-import-modal { max-width: 100%; border-radius: 16px; }
+  .ai-import-header { padding: 20px 18px 16px; }
+  .ai-step { padding: 16px 18px 0; }
+  .ai-import-footer { padding: 16px 18px 20px; flex-direction: column; align-items: stretch; }
+  .ai-import-footer > div { justify-content: flex-end; }
+  .ai-prompt-box { font-size: 0.8rem; }
+  .ai-paste-area { min-height: 90px; }
+
+  /* Hint row wraps on small screens */
+  .grid-hint-row { flex-wrap: wrap; gap: 10px; }
+
+  /* Participant chips smaller */
+  .participant-chip { font-size: 0.78rem; padding: 4px 10px 4px 5px; }
+  .chip-dot { width: 18px; height: 18px; font-size: 0.55rem; }
 }
 
 @media (max-width: 400px) {
   .nav-title-wrap { display: none; }
-  #grid, #overlapGrid { min-width: 320px; }
-  .grid-label { width: 34px; min-width: 34px; font-size: 0.65rem; }
-  .grid-day-header { font-size: 0.65rem; }
+  #grid, #overlapGrid { min-width: 300px; }
+  .grid-label { width: 34px; min-width: 34px; font-size: 0.62rem; }
+  .grid-day-header { font-size: 0.62rem; }
+  .grid-cell { height: 30px; }
 }
 
 /* ---- UTIL ---- */
