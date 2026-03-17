@@ -35,30 +35,26 @@ body {
 
 .nav-logo span { color: #222222; }
 
-.nav-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-title-input {
-  border: 1.5px solid transparent;
+.session-title-input {
+  border: none;
   background: transparent;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #222222;
   text-align: center;
   outline: none;
-  width: 200px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  transition: background 0.15s, border-color 0.15s;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 10px 4px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: 20px;
+  transition: border-color 0.15s;
 }
 
-.nav-title-input:hover { background: #f7f7f7; border-color: #ebebeb; }
-.nav-title-input:focus { background: #f7f7f7; border-color: #dddddd; }
-
-.nav-title-input::placeholder { color: #b0b0b0; font-weight: 400; }
+.session-title-input:hover { border-color: #ebebeb; }
+.session-title-input:focus { border-color: #dddddd; }
+.session-title-input::placeholder { color: #d0d0d0; font-weight: 400; }
 
 .nav-actions {
   display: flex;
@@ -235,7 +231,7 @@ body {
 /* ---- PERSONA BUBBLES SECTION ---- */
 .personas-section {
   text-align: center;
-  padding: 36px 0 28px;
+  padding: 20px 0 28px;
 }
 
 .personas-section h2 {
@@ -885,7 +881,8 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   .nav-title-input { width: 130px; font-size: 0.85rem; }
   .nav-actions .share-box input { display: none; }
   .page-wrap { padding: 16px 12px 80px; }
-  .personas-section { padding: 20px 0 14px; }
+  .personas-section { padding: 12px 0 14px; }
+  .session-title-input { font-size: 1.15rem; margin-bottom: 16px; }
   .personas-section h2 { font-size: 0.85rem; margin-bottom: 18px; }
   .bubble-avatar { width: 54px; height: 54px; font-size: 1rem; }
   .personas-row { gap: 14px; }
@@ -922,7 +919,6 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 }
 
 @media (max-width: 400px) {
-  .nav-title-wrap { display: none; }
   #grid, #overlapGrid { min-width: 300px; }
   .grid-label { width: 34px; min-width: 34px; font-size: 0.62rem; }
   .grid-day-header { font-size: 0.62rem; }
