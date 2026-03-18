@@ -195,7 +195,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     fetch(`/api/sessions/${sessionId}`)
       .then(r => r.json())
       .then(s => {
-        if (s.title) document.getElementById('sessionTitleInput').value = s.title;
+        if (s.title) { document.getElementById('sessionTitleInput').value = s.title; updatePhVisibility(); }
       });
 
     // Update session title on blur/enter
