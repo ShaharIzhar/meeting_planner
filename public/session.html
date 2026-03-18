@@ -53,7 +53,7 @@
           </button>
         </div>
       </div>
-      <p class="hint" style="margin-bottom:16px;">Click or drag across slots when you're free</p>
+      <p class="hint" style="margin-bottom:16px;">Click or drag across slots when you're <strong>free</strong></p>
       <div class="grid-wrapper">
         <div id="grid"></div>
       </div>
@@ -295,9 +295,9 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       const card = document.getElementById('gridCard');
       card.style.opacity = locked ? '0.45' : '1';
       card.style.pointerEvents = locked ? 'none' : '';
-      card.querySelector('.hint').textContent = locked
+      card.querySelector('.hint').innerHTML = locked
         ? 'Select or add a person above to mark your availability'
-        : 'Click or drag across slots when you\'re free';
+        : 'Click or drag across slots when you\'re <strong>free</strong>';
     }
 
     function setActivePersona(name) {
