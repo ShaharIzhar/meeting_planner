@@ -197,19 +197,6 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
 
 
-    // Load session title + seed personas immediately so bubbles appear without waiting for overlap
-    fetch(`/api/sessions/${sessionId}`)
-      .then(r => r.json())
-      .then(s => {
-        if (s.title) { document.getElementById('sessionTitleInput').value = s.title; updatePhVisibility(); }
-        Object.entries(s.participants || {}).forEach(([name, slots]) => {
-          if (!personas.find(p => p.name === name)) {
-            personas.push({ name, color: AVATAR_COLORS[personas.length % AVATAR_COLORS.length] });
-          }
-          if (!personaSelections[name]) personaSelections[name] = new Set(slots);
-        });
-        if (personas.length > 0) renderPersonaBubbles();
-      });
 
     // Update session title on blur/enter
     const titleInput = document.getElementById('sessionTitleInput');
@@ -558,28 +545,29 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       saveTimer = setTimeout(saveAvailability, 900);
     }
 
-    // ---- Load & render overlap ----
+    // ---- Load session data & render ----
     async function loadOverlap() {
-      const [sessionRes, overlapRes] = await Promise.all([
-        fetch(`/api/sessions/${sessionId}`).then(r => r.json()),
-        fetch(`/api/sessions/${sessionId}/overlap`).then(r => r.json()),
-      ]);
+      const sessionRes = await fetch(`/api/sessions/${sessionId}`).then(r => r.json());
+      const participants = sessionRes.participants;
+      if (!participants) return; // session not found or server error
+
+      // Set title on first load
+      if (sessionRes.title && !document.getElementById('sessionTitleInput').value) {
+        document.getElementById('sessionTitleInput').value = sessionRes.title;
+        updatePhVisibility();
+      }
 
       // Sync server participants to local personas + seed their saved slots
-      Object.entries(sessionRes.participants).forEach(([name, slots]) => {
+      Object.entries(participants).forEach(([name, slots]) => {
         if (!personas.find(p => p.name === name)) {
           personas.push({ name, color: AVATAR_COLORS[personas.length % AVATAR_COLORS.length] });
         }
-        // Seed from server; don't overwrite unsaved in-progress edits
-        if (!personaSelections[name]) {
-          personaSelections[name] = new Set(slots);
-        }
+        if (!personaSelections[name]) personaSelections[name] = new Set(slots);
       });
 
       // If active persona's grid is stale vs server, refresh it
-      if (activePersona && sessionRes.participants[activePersona]) {
-        const serverSlots = new Set(sessionRes.participants[activePersona]);
-        // Only update if user hasn't made local changes on top
+      if (activePersona && participants[activePersona]) {
+        const serverSlots = new Set(participants[activePersona]);
         if (!personaSelections[activePersona] || personaSelections[activePersona].size === 0) {
           personaSelections[activePersona] = serverSlots;
           selected = new Set(serverSlots);
@@ -590,16 +578,12 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       }
       renderPersonaBubbles();
 
-      // Cache server participants and render both panels
+      // Cache and render overlap panels
       serverParticipants = {};
-      Object.entries(sessionRes.participants).forEach(([name, slots]) => {
-        serverParticipants[name] = slots;
-      });
+      Object.entries(participants).forEach(([name, slots]) => { serverParticipants[name] = slots; });
 
-      // Merge in current unsaved selection for active persona
       const merged = { ...serverParticipants };
       if (activePersona) merged[activePersona] = [...selected];
-
       renderOverlapPanels(merged);
     }
 
@@ -976,8 +960,7 @@ document.getElementById('aiImportModal').classList.remove('hidden');
     // ---- Boot ----
     setGridLocked(true);
     renderPersonaBubbles();
-    loadOverlap();
-    setTimeout(() => { if (personas.length === 0) showSplashBubble(); }, 1200);
+    loadOverlap().then(() => { if (personas.length === 0) showSplashBubble(); });
     setInterval(loadOverlap, 10000);
   </script>
   <footer class="site-footer">
