@@ -42,7 +42,7 @@
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span id="gridTitle">Select your availability</span>
-        <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+        <div class="card-actions">
           <div id="saveStatus" class="save-status hidden">
             <span class="save-led" id="saveLed"></span>
             <span id="saveLabel">Saved</span>
@@ -56,6 +56,12 @@
       <p class="hint" style="margin-bottom:16px;">Click or drag across slots when you're <strong>free</strong></p>
       <div class="grid-wrapper">
         <div id="grid"></div>
+      </div>
+      <div class="grid-clear-row">
+        <button class="ai-import-btn clear-btn" onclick="clearAllSlots()" id="clearBtn" style="display:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Clear all
+        </button>
       </div>
     </div>
 
@@ -191,11 +197,18 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
 
 
-    // Load session title
+    // Load session title + seed personas immediately so bubbles appear without waiting for overlap
     fetch(`/api/sessions/${sessionId}`)
       .then(r => r.json())
       .then(s => {
         if (s.title) { document.getElementById('sessionTitleInput').value = s.title; updatePhVisibility(); }
+        Object.entries(s.participants || {}).forEach(([name, slots]) => {
+          if (!personas.find(p => p.name === name)) {
+            personas.push({ name, color: AVATAR_COLORS[personas.length % AVATAR_COLORS.length] });
+          }
+          if (!personaSelections[name]) personaSelections[name] = new Set(slots);
+        });
+        if (personas.length > 0) renderPersonaBubbles();
       });
 
     // Update session title on blur/enter
@@ -317,6 +330,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       clearTimeout(saveTimer);
       setSaveStatus('hidden');
       setGridLocked(false);
+      updateClearBtn();
       renderPersonaBubbles();
     }
 
@@ -324,11 +338,28 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
     function renderPersonaBubbles() {
       const container = document.getElementById('personaBubbles');
-      container.innerHTML = '';
 
+      // Ensure "+" bubble exists
+      let addBubble = container.querySelector('.add-bubble');
+      if (!addBubble) {
+        addBubble = document.createElement('div');
+        addBubble.className = 'persona-bubble add-bubble';
+        addBubble.innerHTML = `<div class="bubble-avatar add-avatar">+</div><span class="bubble-name">Add</span>`;
+        addBubble.addEventListener('click', showAddModal);
+        container.appendChild(addBubble);
+      }
+
+      // Remove bubbles for personas no longer in list
+      container.querySelectorAll('.persona-bubble[data-persona]').forEach(wrap => {
+        if (!personas.find(p => p.name === wrap.dataset.persona)) wrap.remove();
+      });
+
+      // Add bubbles for new personas (inserted before "+" bubble)
       personas.forEach(persona => {
+        if (container.querySelector(`.persona-bubble[data-persona="${CSS.escape(persona.name)}"]`)) return;
         const wrap = document.createElement('div');
-        wrap.className = 'persona-bubble' + (persona.name === activePersona ? ' active' : '') + (persona.name === showRemoveFor ? ' show-remove' : '');
+        wrap.className = 'persona-bubble';
+        wrap.dataset.persona = persona.name;
         wrap.innerHTML = `
           <div class="bubble-avatar" style="background:${persona.color}">
             ${getInitials(persona.name)}
@@ -345,18 +376,15 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
           if (isTouch) showRemoveFor = persona.name;
           setActivePersona(persona.name);
         });
-        container.appendChild(wrap);
+        container.insertBefore(wrap, addBubble);
       });
 
-      // "+" add bubble
-      const addWrap = document.createElement('div');
-      addWrap.className = 'persona-bubble add-bubble';
-      addWrap.innerHTML = `
-        <div class="bubble-avatar add-avatar">+</div>
-        <span class="bubble-name">Add</span>
-      `;
-      addWrap.addEventListener('click', showAddModal);
-      container.appendChild(addWrap);
+      // Update active / show-remove states
+      container.querySelectorAll('.persona-bubble[data-persona]').forEach(wrap => {
+        const n = wrap.dataset.persona;
+        wrap.classList.toggle('active', n === activePersona);
+        wrap.classList.toggle('show-remove', n === showRemoveFor);
+      });
     }
 
     // ---- Modal ----
@@ -469,6 +497,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       } else {
         selected.delete(slotId); cell.classList.remove('selected');
       }
+      updateClearBtn();
       previewOverlap();
       scheduleSave();
     }
@@ -495,8 +524,23 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       label.textContent = state === 'saving' ? 'Saving…' : 'Saved';
     }
 
+    function updateClearBtn() {
+      const btn = document.getElementById('clearBtn');
+      if (btn) btn.style.display = (activePersona && selected.size > 0) ? '' : 'none';
+    }
+
+    window.clearAllSlots = function() {
+      if (!activePersona) return;
+      selected = new Set();
+      document.querySelectorAll('.grid-cell').forEach(c => c.classList.remove('selected'));
+      personaSelections[activePersona] = new Set();
+      updateClearBtn();
+      previewOverlap();
+      scheduleSave();
+    };
+
     async function saveAvailability() {
-      if (!activePersona || selected.size === 0) return;
+      if (!activePersona) return;
       setSaveStatus('saving');
       await fetch(`/api/sessions/${sessionId}/availability`, {
         method: 'POST',
@@ -932,9 +976,8 @@ document.getElementById('aiImportModal').classList.remove('hidden');
     // ---- Boot ----
     setGridLocked(true);
     renderPersonaBubbles();
-    loadOverlap().then(() => {
-      if (personas.length === 0) setTimeout(showSplashBubble, 400);
-    });
+    loadOverlap();
+    setTimeout(() => { if (personas.length === 0) showSplashBubble(); }, 1200);
     setInterval(loadOverlap, 10000);
   </script>
   <footer class="site-footer">
