@@ -504,6 +504,10 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 
 .grid-cell:hover { background: #dcfce7; border-color: #86efac; }
 .grid-cell.selected { background: #4ade8033; border-color: #4ade8099; }
+@media (hover: none) {
+  .grid-cell:hover { background: #f7f7f7; border-color: #ebebeb; }
+  .grid-cell.selected:hover { background: #4ade8033; border-color: #4ade8099; }
+}
 
 /* ---- OVERLAP HEATMAP ---- */
 .overlap-cell {

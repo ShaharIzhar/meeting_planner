@@ -449,6 +449,9 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     document.addEventListener('mouseup', () => { isDragging = false; });
 
     // ---- Touch support for grid ----
+    let touchOriginX = 0, touchOriginY = 0, touchOriginCell = null, touchOriginSlot = null;
+    const DRAG_THRESHOLD = 8; // px of movement before treating as a drag
+
     grid.addEventListener('touchstart', e => {
       const touch = e.touches[0];
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -457,15 +460,25 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       e.preventDefault();
       if (!activePersona) { showAddModal(); return; }
       const slotId = cell.dataset.slot;
-      isDragging = true;
+      touchOriginX = touch.clientX;
+      touchOriginY = touch.clientY;
+      touchOriginCell = cell;
+      touchOriginSlot = slotId;
+      isDragging = false;
       dragAdding = !selected.has(slotId);
-      toggle(cell, slotId);
     }, { passive: false });
 
     grid.addEventListener('touchmove', e => {
-      if (!isDragging || !activePersona) return;
+      if (!touchOriginCell || !activePersona) return;
       e.preventDefault();
       const touch = e.touches[0];
+      if (!isDragging) {
+        const dx = touch.clientX - touchOriginX;
+        const dy = touch.clientY - touchOriginY;
+        if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+        isDragging = true;
+        toggle(touchOriginCell, touchOriginSlot); // commit origin cell on drag start
+      }
       const el = document.elementFromPoint(touch.clientX, touch.clientY);
       const cell = el?.closest('.grid-cell');
       if (!cell) return;
@@ -473,7 +486,14 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       toggle(cell, slotId, dragAdding);
     }, { passive: false });
 
-    grid.addEventListener('touchend', () => { isDragging = false; });
+    grid.addEventListener('touchend', () => {
+      if (!isDragging && touchOriginCell) {
+        toggle(touchOriginCell, touchOriginSlot); // clean tap
+      }
+      isDragging = false;
+      touchOriginCell = null;
+      touchOriginSlot = null;
+    });
 
     function toggle(cell, slotId, forceAdd) {
       if (forceAdd === undefined) {
