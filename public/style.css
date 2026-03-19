@@ -1045,3 +1045,14 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 
 .hero-stats span { display: flex; align-items: center; gap: 6px; }
 .hero-stats strong { color: #222222; font-weight: 600; }
+
+/* ---- FOOTER ---- */
+.site-footer {
+  text-align: center;
+  padding: 24px 16px;
+  margin-top: 48px;
+  border-top: 1px solid #ebebeb;
+  color: #b0b0b0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
