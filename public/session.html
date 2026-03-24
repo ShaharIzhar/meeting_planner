@@ -32,6 +32,11 @@
           <input type="text" id="sessionTitleInput" class="session-title-input" maxlength="60" />
           <span class="title-placeholder" id="titlePlaceholder"></span>
         </div>
+        <div class="settings-wrap settings-wrap--far-right">
+          <button class="settings-btn" id="settingsBtn" onclick="toggleSettings(event)" title="Schedule settings">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#c0c0c0"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96a7.05 7.05 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87a.476.476 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </button>
+        </div>
       </div>
       <h2>Who's joining?</h2>
       <div class="personas-row" id="personaBubbles"></div>
@@ -39,20 +44,22 @@
 
     <!-- AVAILABILITY GRID -->
     <div class="card" id="gridCard">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleGridCard()" style="cursor:pointer;">
+        <svg id="gridCollapseChevron" class="collapse-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span id="gridTitle">Select your availability</span>
-        <div class="card-actions">
+        <div class="card-actions" onclick="event.stopPropagation()">
           <div id="saveStatus" class="save-status hidden">
             <span class="save-led" id="saveLed"></span>
             <span id="saveLabel">Saved</span>
           </div>
           <button class="ai-import-btn" onclick="openAiImport()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
             Import from AI
           </button>
         </div>
       </div>
+      <div id="gridCardBody">
       <p class="hint" style="margin-bottom:16px;">Click or drag across slots when you're <strong>free</strong></p>
       <div class="grid-wrapper">
         <div id="grid"></div>
@@ -63,6 +70,7 @@
           Clear all
         </button>
       </div>
+      </div><!-- /gridCardBody -->
     </div>
 
     <!-- TEAM OVERLAP -->
@@ -70,6 +78,12 @@
       <div class="card-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00A699" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/></svg>
         Team Availability
+        <div class="card-actions">
+          <button class="ai-import-btn insights-btn" id="insightsToggleBtn" onclick="toggleInsights()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+            Insights
+          </button>
+        </div>
       </div>
       <div class="participant-chips" id="participantChips"></div>
       <div id="noOverlap" class="muted hidden">No availability submitted yet — be the first!</div>
@@ -102,6 +116,96 @@
     <span>Team</span>
     <span class="panel-badge hidden" id="panelBadge">0</span>
   </button>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal settings-modal">
+
+      <div class="settings-modal-header">
+        <div class="settings-modal-title-wrap">
+          <div class="settings-modal-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="#777"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96a7.05 7.05 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87a.476.476 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </div>
+          <div>
+            <h3>Schedule Settings</h3>
+            <p>Choose how dates are shown across the availability grid.</p>
+          </div>
+        </div>
+        <button class="splash-close settings-modal-close-btn" onclick="closeSettings()">✕</button>
+      </div>
+
+      <div class="settings-modal-body">
+        <div class="settings-section-label">Schedule mode</div>
+        <div class="settings-option-cards">
+
+          <button class="settings-option-card" id="modeWeekdays" onclick="setDateMode(false)">
+            <div class="settings-option-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="settings-option-text">
+              <span class="settings-option-title">General week</span>
+              <span class="settings-option-desc">Repeating Sun–Sat grid, not tied to specific dates</span>
+            </div>
+            <div class="settings-option-check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+
+          <button class="settings-option-card" id="modeSpecific" onclick="setDateMode(true)">
+            <div class="settings-option-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" stroke-width="3"/><line x1="12" y1="14" x2="12" y2="14" stroke-width="3"/><line x1="16" y1="14" x2="16" y2="14" stroke-width="3"/></svg>
+            </div>
+            <div class="settings-option-text">
+              <span class="settings-option-title">Specific week</span>
+              <span class="settings-option-desc">Pin the grid to real calendar dates for a chosen week</span>
+            </div>
+            <div class="settings-option-check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </button>
+
+        </div>
+
+        <div id="weekNavSection" style="display:none;">
+          <div class="settings-section-label" style="margin-bottom:12px;">Week</div>
+          <div class="week-nav week-nav--settings" id="weekNav">
+            <button class="week-nav-btn" onclick="shiftWeek(-1)">&#8249;</button>
+            <span class="week-nav-label" id="weekNavLabel"></span>
+            <button class="week-nav-btn" onclick="shiftWeek(1)">&#8250;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-modal-footer">
+        <button class="btn-primary" onclick="closeSettings()">Done</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- INSIGHTS MODAL -->
+  <div class="modal-overlay hidden" id="insightsModal">
+    <div class="modal insights-modal">
+      <div class="insights-modal-header">
+        <div class="insights-modal-title-wrap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+          <div>
+            <h3>Meeting Insights</h3>
+            <p>Best windows based on everyone's availability.</p>
+          </div>
+        </div>
+        <button class="splash-close insights-modal-close" onclick="closeInsights()">✕</button>
+      </div>
+      <div class="insights-modal-body" id="insightsModalBody"></div>
+      <div class="insights-modal-footer">
+        <span class="insights-modal-note" id="insightsModalNote"></span>
+        <button class="btn-blue" onclick="copyAvailability()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy Insights
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- AI IMPORT MODAL -->
   <div class="modal-overlay hidden" id="aiImportModal">
@@ -190,8 +294,12 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     let selected          = new Set();
     let personaSelections = {}; // name → Set of slot strings
     let serverParticipants = {}; // cached from last loadOverlap
+    let filteredOut       = new Set(); // names excluded from overlap view
     let isDragging        = false;
     let dragAdding        = true;
+    let dateMode          = false;
+    let weekOffset        = 0;
+    let lastInsights      = [];
 
     // ---- Init ----
     document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
@@ -276,6 +384,52 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       showToast('✓ Link copied!');
     }
 
+    // ---- Insights modal ----
+    function toggleInsights() {
+      renderInsightsModal();
+      document.getElementById('insightsModal').classList.remove('hidden');
+      document.getElementById('insightsToggleBtn').classList.add('ai-import-btn--active');
+    }
+    function closeInsights() {
+      document.getElementById('insightsModal').classList.add('hidden');
+      document.getElementById('insightsToggleBtn').classList.remove('ai-import-btn--active');
+    }
+    function renderInsightsModal() {
+      const body = document.getElementById('insightsModalBody');
+      const note = document.getElementById('insightsModalNote');
+      body.innerHTML = '';
+      if (lastInsights.length === 0) {
+        body.innerHTML = '<p class="muted" style="padding:8px 0 16px;">No overlap found yet — check back once more people submit.</p>';
+        note.textContent = '';
+      } else {
+        const section = document.createElement('div');
+        section.className = 'insights-section insights-section--modal';
+        lastInsights.forEach(({ type, text }) => {
+          const row = document.createElement('div');
+          row.className = 'insight-row';
+          row.innerHTML = `<span class="insight-dot ${type}"></span><span>${text}</span>`;
+          section.appendChild(row);
+        });
+        body.appendChild(section);
+        const filtered = filteredOut.size > 0;
+        const total = Object.keys(serverParticipants).length;
+        note.textContent = filtered ? `Showing ${total - filteredOut.size} of ${total} people` : `Based on ${total} participant${total !== 1 ? 's' : ''}`;
+      }
+    }
+
+    // ---- Copy availability summary ----
+    function copyAvailability() {
+      const title = document.getElementById('sessionTitleInput').value.trim() || 'Meeting';
+      let text = `Meeting options for "${title}":\n\n`;
+      if (lastInsights.length === 0) {
+        text += 'No overlap yet.';
+      } else {
+        lastInsights.forEach(({ plain }) => { text += `• ${plain}\n`; });
+      }
+      navigator.clipboard.writeText(text.trim());
+      showToast('✓ Insights copied to clipboard!');
+    }
+
     // ---- Persona helpers ----
     function getInitials(name) {
       return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -291,13 +445,36 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       setActivePersona(existing ? existing.name : name);
     }
 
+    function toggleSettings(e) {
+      e.stopPropagation();
+      document.getElementById('settingsModal').classList.remove('hidden');
+      document.getElementById('settingsBtn').classList.add('settings-btn--active');
+    }
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.add('hidden');
+      document.getElementById('settingsBtn').classList.remove('settings-btn--active');
+    }
+    document.getElementById('settingsModal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('settingsModal')) closeSettings();
+    });
+
+    function toggleGridCard(e) {
+      const body = document.getElementById('gridCardBody');
+      const chevron = document.getElementById('gridCollapseChevron');
+      const collapsed = body.classList.toggle('collapsed');
+      chevron.classList.toggle('chevron-up', !collapsed);
+    }
+
     function setGridLocked(locked) {
       const card = document.getElementById('gridCard');
-      card.style.opacity = locked ? '0.45' : '1';
-      card.style.pointerEvents = locked ? 'none' : '';
-      card.querySelector('.hint').innerHTML = locked
-        ? 'Select or add a person above to mark your availability'
-        : 'Click or drag across slots when you\'re <strong>free</strong>';
+      const body = document.getElementById('gridCardBody');
+      body.style.display = locked ? 'none' : '';
+      const actions = card.querySelector('.card-actions');
+      actions.style.display = locked ? 'none' : '';
+      document.getElementById('gridCollapseChevron').style.display = locked ? 'none' : '';
+      card.classList.toggle('card--disabled', locked);
+      card.querySelector('.hint').innerHTML = 'Click or drag across slots when you\'re <strong>free</strong>';
+      if (locked) document.getElementById('gridTitle').textContent = 'Select a Profile';
     }
 
     function setActivePersona(name) {
@@ -401,50 +578,107 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       if (e.target === document.getElementById('addPersonaModal')) closeModal();
     });
 
+    // ---- Date mode helpers ----
+    const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    function getWeekDates(offset) {
+      const now = new Date();
+      const sunday = new Date(now);
+      sunday.setDate(now.getDate() - now.getDay() + offset * 7);
+      return DAYS.map((_, i) => {
+        const d = new Date(sunday);
+        d.setDate(sunday.getDate() + i);
+        return d;
+      });
+    }
+
+    function updateWeekNav() {
+      const dates = getWeekDates(weekOffset);
+      const s = dates[0], e = dates[6];
+      document.getElementById('weekNavLabel').textContent =
+        `${MONTH_ABBR[s.getMonth()]} ${s.getDate()} – ${MONTH_ABBR[e.getMonth()]} ${e.getDate()}`;
+    }
+
+    function setDateMode(on) {
+      dateMode = on;
+      if (on && weekOffset === 0) updateWeekNav();
+      document.getElementById('modeWeekdays').classList.toggle('active', !on);
+      document.getElementById('modeSpecific').classList.toggle('active', on);
+      document.getElementById('weekNavSection').style.display = on ? 'block' : 'none';
+      if (on) updateWeekNav();
+      buildPersonalGrid();
+      // Re-render overlap panels with updated date headers
+      const merged = { ...serverParticipants };
+      if (activePersona) merged[activePersona] = [...selected];
+      renderOverlapPanels(merged);
+    }
+
+    function shiftWeek(delta) {
+      weekOffset += delta;
+      updateWeekNav();
+      buildPersonalGrid();
+      const merged = { ...serverParticipants };
+      if (activePersona) merged[activePersona] = [...selected];
+      renderOverlapPanels(merged);
+    }
+
     // ---- Build availability grid ----
     const grid = document.getElementById('grid');
 
-    const headerRow = document.createElement('div');
-    headerRow.className = 'grid-row';
-    headerRow.appendChild(Object.assign(document.createElement('div'), { className: 'grid-label' }));
-    DAYS.forEach(day => {
-      const el = document.createElement('div');
-      el.className = 'grid-day-header';
-      el.textContent = day;
-      headerRow.appendChild(el);
-    });
-    grid.appendChild(headerRow);
+    function buildPersonalGrid() {
+      grid.innerHTML = '';
+      const weekDates = dateMode ? getWeekDates(weekOffset) : null;
 
-    HOURS.forEach(hour => {
-      const row = document.createElement('div');
-      row.className = 'grid-row';
-
-      const label = document.createElement('div');
-      label.className = 'grid-label';
-      label.textContent = hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
-      row.appendChild(label);
-
-      DAYS.forEach(day => {
-        const cell = document.createElement('div');
-        const slotId = `${day}-${hour}`;
-        cell.className = 'grid-cell';
-        cell.dataset.slot = slotId;
-
-        cell.addEventListener('mousedown', e => {
-          e.preventDefault();
-          if (!activePersona) { showAddModal(); return; }
-          isDragging  = true;
-          dragAdding  = !selected.has(slotId);
-          toggle(cell, slotId);
-        });
-        cell.addEventListener('mouseenter', () => {
-          if (isDragging && activePersona) toggle(cell, slotId, dragAdding);
-        });
-
-        row.appendChild(cell);
+      const headerRow = document.createElement('div');
+      headerRow.className = 'grid-row';
+      headerRow.appendChild(Object.assign(document.createElement('div'), { className: 'grid-label' }));
+      DAYS.forEach((day, i) => {
+        const el = document.createElement('div');
+        if (weekDates) {
+          el.className = 'grid-day-header date-mode';
+          el.innerHTML = `${day}<span class="grid-day-date">${weekDates[i].getDate()}</span>`;
+        } else {
+          el.className = 'grid-day-header';
+          el.textContent = day;
+        }
+        headerRow.appendChild(el);
       });
-      grid.appendChild(row);
-    });
+      grid.appendChild(headerRow);
+
+      HOURS.forEach(hour => {
+        const row = document.createElement('div');
+        row.className = 'grid-row';
+
+        const label = document.createElement('div');
+        label.className = 'grid-label';
+        label.textContent = hour < 12 ? `${hour}am` : hour === 12 ? '12pm' : `${hour - 12}pm`;
+        row.appendChild(label);
+
+        DAYS.forEach(day => {
+          const cell = document.createElement('div');
+          const slotId = `${day}-${hour}`;
+          cell.className = 'grid-cell';
+          cell.dataset.slot = slotId;
+          cell.classList.toggle('selected', selected.has(slotId));
+
+          cell.addEventListener('mousedown', e => {
+            e.preventDefault();
+            if (!activePersona) { showAddModal(); return; }
+            isDragging  = true;
+            dragAdding  = !selected.has(slotId);
+            toggle(cell, slotId);
+          });
+          cell.addEventListener('mouseenter', () => {
+            if (isDragging && activePersona) toggle(cell, slotId, dragAdding);
+          });
+
+          row.appendChild(cell);
+        });
+        grid.appendChild(row);
+      });
+    }
+
+    buildPersonalGrid();
 
     document.addEventListener('mouseup', () => { isDragging = false; });
 
@@ -602,6 +836,11 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       serverParticipants = {};
       Object.entries(participants).forEach(([name, slots]) => { serverParticipants[name] = slots; });
 
+      // Remove stale filtered-out names (participant left the session)
+      for (const name of filteredOut) {
+        if (!participants[name]) filteredOut.delete(name);
+      }
+
       const merged = { ...serverParticipants };
       if (activePersona) merged[activePersona] = [...selected];
       renderOverlapPanels(merged);
@@ -609,35 +848,77 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
     // ---- Shared overlap renderer (bottom + side panel) ----
     function renderOverlapPanels(participants) {
-      const names = Object.keys(participants);
+      const allNames = Object.keys(participants);
 
-      // Compute overlap from participants map
+      // Apply filter: only use non-excluded participants for the grid
+      const activeNames = allNames.filter(n => !filteredOut.has(n));
       const slotCounts = {};
       const slotNamesMap = {};
-      names.forEach(name => {
+      activeNames.forEach(name => {
         (participants[name] || []).forEach(slot => {
           slotCounts[slot] = (slotCounts[slot] || 0) + 1;
           if (!slotNamesMap[slot]) slotNamesMap[slot] = [];
           slotNamesMap[slot].push(name);
         });
       });
-      const total = names.length;
+      const total = activeNames.length;
       const hasData = total > 0 && Object.keys(slotCounts).length > 0;
 
-      // Chips (both panels)
-      const chipsHTML = names.map(n => {
-        const p = personas.find(x => x.name === n);
-        const color = p ? p.color : '#717171';
-        return `<span class="participant-chip">
-          <span class="chip-dot" style="background:${color}">${getInitials(n)}</span>${n}
-        </span>`;
-      }).join('');
-      document.getElementById('participantChips').innerHTML = chipsHTML;
-      document.getElementById('sidePanelChips').innerHTML = chipsHTML;
+      // Chips (both panels) — clickable to toggle filter
+      const EYE_OPEN = `<svg class="chip-eye" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 4C5.5 4 2 10 2 10s3.5 6 8 6 8-6 8-6-3.5-6-8-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>`;
+      const EYE_CLOSED = `<svg class="chip-eye chip-eye--closed" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3l14 14M10 4C5.5 4 2 10 2 10s.9 1.6 2.5 3M17.5 7C18.8 8.5 18 10 18 10s-3.5 6-8 6a7.4 7.4 0 01-3.5-.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3"/></svg>`;
+
+      function makeChipsHTML() {
+        const chips = allNames.map(n => {
+          const p = personas.find(x => x.name === n);
+          const color = p ? p.color : '#717171';
+          const excluded = filteredOut.has(n);
+          return `<span class="participant-chip${excluded ? ' excluded' : ''}" data-name="${n}" title="${excluded ? 'Click to include' : 'Click to exclude'}">
+            <span class="chip-dot" style="background:${color}">${getInitials(n)}</span>${n}${excluded ? EYE_CLOSED : EYE_OPEN}
+          </span>`;
+        }).join('');
+
+        const filterCount = allNames.length - filteredOut.size;
+        const filterLabel = filteredOut.size > 0
+          ? `<span class="filter-reset" title="Show all participants">Showing ${filterCount} of ${allNames.length} &times;</span>`
+          : '';
+
+        return chips + filterLabel;
+      }
+
+      function attachChipHandlers(container) {
+        container.querySelectorAll('.participant-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const name = chip.dataset.name;
+            if (filteredOut.has(name)) filteredOut.delete(name);
+            else filteredOut.add(name);
+            const merged = { ...serverParticipants };
+            if (activePersona) merged[activePersona] = [...selected];
+            renderOverlapPanels(merged);
+          });
+        });
+        const reset = container.querySelector('.filter-reset');
+        if (reset) {
+          reset.addEventListener('click', () => {
+            filteredOut.clear();
+            const merged = { ...serverParticipants };
+            if (activePersona) merged[activePersona] = [...selected];
+            renderOverlapPanels(merged);
+          });
+        }
+      }
+
+      const chipsHTML = makeChipsHTML();
+      const chipsMain = document.getElementById('participantChips');
+      const chipsSide = document.getElementById('sidePanelChips');
+      chipsMain.innerHTML = chipsHTML;
+      chipsSide.innerHTML = chipsHTML;
+      attachChipHandlers(chipsMain);
+      attachChipHandlers(chipsSide);
 
       // Badge
       const badge = document.getElementById('panelBadge');
-      if (names.length > 0) { badge.textContent = names.length; badge.classList.remove('hidden'); }
+      if (allNames.length > 0) { badge.textContent = allNames.length; badge.classList.remove('hidden'); }
       else { badge.classList.add('hidden'); }
 
       // No data state
@@ -650,20 +931,108 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         return;
       }
 
-      buildOverlapGrid(document.getElementById('overlapGrid'),   slotCounts, slotNamesMap, names, total);
-      buildOverlapGrid(document.getElementById('sidePanelGrid'), slotCounts, slotNamesMap, names, total);
+      buildInsights(slotNamesMap, activeNames, total);
+      buildOverlapGrid(document.getElementById('overlapGrid'),   slotCounts, slotNamesMap, activeNames, total);
+      buildOverlapGrid(document.getElementById('sidePanelGrid'), slotCounts, slotNamesMap, activeNames, total);
+    }
+
+    function fmtHour(h) { return h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`; }
+
+    function buildInsights(slotNamesMap, activeNames, total) {
+      lastInsights = [];
+      if (total < 2) return;
+
+      // Gather full and near-full slots per day
+      const fullByDay  = {};  // day → [hour, ...]
+      const nearByDay  = {};  // day → { hour → missingName }
+
+      DAYS.forEach(day => {
+        HOURS.forEach(hour => {
+          const slotId = `${day}-${hour}`;
+          const freeNames = slotNamesMap[slotId] || [];
+          const count = freeNames.length;
+          if (count === total) {
+            if (!fullByDay[day]) fullByDay[day] = [];
+            fullByDay[day].push(hour);
+          } else if (count === total - 1) {
+            const missing = activeNames.find(n => !freeNames.includes(n));
+            if (missing) {
+              if (!nearByDay[day]) nearByDay[day] = {};
+              nearByDay[day][hour] = missing;
+            }
+          }
+        });
+      });
+
+      // Merge consecutive hours into blocks: [{start, end}]
+      function toBlocks(hours) {
+        const sorted = [...hours].sort((a, b) => a - b);
+        const blocks = [];
+        let s = sorted[0], e = sorted[0];
+        for (let i = 1; i < sorted.length; i++) {
+          if (sorted[i] === e + 1) { e = sorted[i]; }
+          else { blocks.push([s, e + 1]); s = e = sorted[i]; }
+        }
+        blocks.push([s, e + 1]);
+        return blocks;
+      }
+
+      const weekDates = dateMode ? getWeekDates(weekOffset) : null;
+      function dayLabel(day) {
+        if (!weekDates) return day;
+        const i = DAYS.indexOf(day);
+        const d = weekDates[i];
+        return `${day} ${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`;
+      }
+
+      const insights = [];
+
+      // Full-overlap blocks
+      DAYS.forEach(day => {
+        if (!fullByDay[day]) return;
+        toBlocks(fullByDay[day]).forEach(([s, e]) => {
+          insights.push({ type: 'full', plain: `Everyone is free: ${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}`, text: `Everyone is free <strong>${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}</strong>` });
+        });
+      });
+
+      // Near-full blocks (group consecutive hours with the same missing person)
+      DAYS.forEach(day => {
+        if (!nearByDay[day]) return;
+        const hoursByMissing = {};
+        Object.entries(nearByDay[day]).forEach(([hour, name]) => {
+          if (!hoursByMissing[name]) hoursByMissing[name] = [];
+          hoursByMissing[name].push(Number(hour));
+        });
+        Object.entries(hoursByMissing).forEach(([name, hours]) => {
+          toBlocks(hours).forEach(([s, e]) => {
+            insights.push({ type: 'near', plain: `Everyone except ${name}: ${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}`, text: `Everyone except <strong>${name}</strong> is free <strong>${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}</strong>` });
+          });
+        });
+      });
+
+      lastInsights = insights.slice(0, 3);
+      // If modal is open, refresh it live
+      if (!document.getElementById('insightsModal').classList.contains('hidden')) {
+        renderInsightsModal();
+      }
     }
 
     function buildOverlapGrid(container, slotCounts, slotNamesMap, allNames, total) {
       container.innerHTML = '';
+      const weekDates = dateMode ? getWeekDates(weekOffset) : null;
 
       const hdr = document.createElement('div');
       hdr.className = 'grid-row';
       hdr.appendChild(Object.assign(document.createElement('div'), { className: 'grid-label' }));
-      DAYS.forEach(day => {
+      DAYS.forEach((day, i) => {
         const el = document.createElement('div');
-        el.className = 'grid-day-header';
-        el.textContent = day;
+        if (weekDates) {
+          el.className = 'grid-day-header date-mode';
+          el.innerHTML = `${day}<span class="grid-day-date">${weekDates[i].getDate()}</span>`;
+        } else {
+          el.className = 'grid-day-header';
+          el.textContent = day;
+        }
         hdr.appendChild(el);
       });
       container.appendChild(hdr);
@@ -876,7 +1245,20 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     window.openAiImport = function() {
       if (!activePersona) { showAddModal(); return; }
       document.getElementById('aiPasteArea').value = '';
-document.getElementById('aiImportModal').classList.remove('hidden');
+
+      // Update prompt to reflect date mode
+      if (dateMode) {
+        const dates = getWeekDates(weekOffset);
+        const fmt = d => `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`;
+        const dayLines = DAYS.map((day, i) => `${day} (${fmt(dates[i])})`).join(', ');
+        document.getElementById('aiPromptBox').textContent =
+          `List all my busy times for the week of ${fmt(dates[0])}–${fmt(dates[6])} (${dayLines}) between 8am and 9pm. Use this exact format only, one entry per line:\n\nDay StartTime - EndTime\n\nExamples:\nSun 9am - 11am\nMon 2pm - 4:30pm\nWed 13:00 - 14:00\n\nOnly output the list, no other text.`;
+      } else {
+        document.getElementById('aiPromptBox').textContent =
+          `List all my busy times for the upcoming week (Sun–Sat) between 8am and 9pm. Use this exact format only, one entry per line:\n\nDay StartTime - EndTime\n\nExamples:\nSun 9am - 11am\nMon 2pm - 4:30pm\nWed 13:00 - 14:00\n\nOnly output the list, no other text.`;
+      }
+
+      document.getElementById('aiImportModal').classList.remove('hidden');
     };
 
     window.closeAiImport = function() {
@@ -885,6 +1267,9 @@ document.getElementById('aiImportModal').classList.remove('hidden');
 
     document.getElementById('aiImportModal')?.addEventListener('click', e => {
       if (e.target === document.getElementById('aiImportModal')) closeAiImport();
+    });
+    document.getElementById('insightsModal')?.addEventListener('click', e => {
+      if (e.target === document.getElementById('insightsModal')) closeInsights();
     });
 
     window.copyPrompt = function() {
