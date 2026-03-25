@@ -6,3 +6,4 @@ build/
 *.log
 *.db
 .DS_Store
+bugs_and_todos.md
