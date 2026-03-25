@@ -133,11 +133,20 @@
             <p>Choose how dates are shown across the availability grid.</p>
           </div>
         </div>
-        <button class="splash-close settings-modal-close-btn" onclick="closeSettings()">✕</button>
+        <button class="settings-modal-close-btn" onclick="closeSettings()">✕</button>
       </div>
 
       <div class="settings-modal-body">
-        <div class="settings-section-label">Schedule mode</div>
+        <div class="settings-section-label">Meeting duration</div>
+        <div class="duration-pills">
+          <button class="duration-pill active" id="dur1h" onclick="setMeetingDuration(1)">1h</button>
+          <button class="duration-pill" id="dur2h" onclick="setMeetingDuration(2)">2h</button>
+          <button class="duration-pill" id="dur3h" onclick="setMeetingDuration(3)">3h</button>
+          <button class="duration-pill" id="dur4h" onclick="setMeetingDuration(4)">4h</button>
+        </div>
+        <p class="settings-section-hint">Only show time windows long enough to fit the full meeting.</p>
+
+        <div class="settings-section-label" style="margin-top:20px;">Schedule mode</div>
         <div class="settings-option-cards">
 
           <button class="settings-option-card" id="modeWeekdays" onclick="setDateMode(false)">
@@ -196,7 +205,7 @@
             <p>Best windows based on everyone's availability.</p>
           </div>
         </div>
-        <button class="splash-close insights-modal-close" onclick="closeInsights()">✕</button>
+        <button class="insights-modal-close" onclick="closeInsights()">✕</button>
       </div>
       <div class="insights-modal-body" id="insightsModalBody"></div>
       <div class="insights-modal-footer">
@@ -302,6 +311,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     let dateMode          = false;
     let weekOffset        = 0;
     let lastInsights      = [];
+    let meetingDuration   = 1; // hours
 
     // ---- Init ----
     document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
@@ -447,8 +457,20 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       setActivePersona(existing ? existing.name : name);
     }
 
+    function setMeetingDuration(h) {
+      meetingDuration = h;
+      [1,2,3,4].forEach(n => document.getElementById(`dur${n}h`).classList.toggle('active', n === h));
+      const merged = { ...serverParticipants };
+      if (activePersona) merged[activePersona] = [...selected];
+      renderOverlapPanels(merged);
+    }
+
     function toggleSettings(e) {
       e.stopPropagation();
+      document.getElementById('modeWeekdays').classList.toggle('active', !dateMode);
+      document.getElementById('modeSpecific').classList.toggle('active', dateMode);
+      [1,2,3,4].forEach(n => document.getElementById(`dur${n}h`).classList.toggle('active', n === meetingDuration));
+      document.getElementById('weekNavSection').style.display = dateMode ? 'block' : 'none';
       document.getElementById('settingsModal').classList.remove('hidden');
       document.getElementById('settingsBtn').classList.add('settings-btn--active');
     }
@@ -993,6 +1015,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       DAYS.forEach(day => {
         if (!fullByDay[day]) return;
         toBlocks(fullByDay[day]).forEach(([s, e]) => {
+          if ((e - s) < meetingDuration) return;
           insights.push({ type: 'full', plain: `Everyone is free: ${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}`, text: `Everyone is free <strong>${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}</strong>` });
         });
       });
@@ -1007,12 +1030,13 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         });
         Object.entries(hoursByMissing).forEach(([name, hours]) => {
           toBlocks(hours).forEach(([s, e]) => {
+            if ((e - s) < meetingDuration) return;
             insights.push({ type: 'near', plain: `Everyone except ${name}: ${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}`, text: `Everyone except <strong>${name}</strong> is free <strong>${dayLabel(day)} ${fmtHour(s)}–${fmtHour(e)}</strong>` });
           });
         });
       });
 
-      lastInsights = insights.slice(0, 3);
+      lastInsights = insights.slice(0, 5);
       // If modal is open, refresh it live
       if (!document.getElementById('insightsModal').classList.contains('hidden')) {
         renderInsightsModal();
@@ -1272,6 +1296,13 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     });
     document.getElementById('insightsModal')?.addEventListener('click', e => {
       if (e.target === document.getElementById('insightsModal')) closeInsights();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      if (!document.getElementById('settingsModal').classList.contains('hidden')) closeSettings();
+      else if (!document.getElementById('insightsModal').classList.contains('hidden')) closeInsights();
+      else if (!document.getElementById('aiImportModal').classList.contains('hidden')) closeAiImport();
     });
 
     window.copyPrompt = function() {
