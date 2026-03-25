@@ -51,10 +51,6 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF385C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <span id="gridTitle">Select your availability</span>
         <div class="card-actions" onclick="event.stopPropagation()">
-          <div id="saveStatus" class="save-status hidden">
-            <span class="save-led" id="saveLed"></span>
-            <span id="saveLabel">Saved</span>
-          </div>
           <button class="ai-import-btn" onclick="openAiImport()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
             Import from AI
@@ -70,6 +66,10 @@
         <button class="ai-import-btn clear-btn" onclick="clearAllSlots()" id="clearBtn" style="display:none;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           Clear all
+        </button>
+        <button class="approve-btn" id="approveBtn" onclick="saveAvailability()" style="display:none;" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span id="approveBtnLabel">Approve</span>
         </button>
       </div>
       </div><!-- /gridCardBody -->
@@ -498,7 +498,15 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       document.getElementById('gridCollapseChevron').style.display = locked ? 'none' : '';
       card.classList.toggle('card--disabled', locked);
       card.querySelector('.hint').innerHTML = 'Click or drag across slots when you\'re <strong>free</strong>';
-      if (locked) document.getElementById('gridTitle').textContent = 'Select a Profile';
+      const ab = document.getElementById('approveBtn');
+      if (locked) {
+        document.getElementById('gridTitle').textContent = 'Select a Profile';
+        ab.style.display = 'none';
+      } else {
+        ab.style.display = '';
+        ab.disabled = true;
+        document.getElementById('approveBtnLabel').textContent = 'Approve';
+      }
     }
 
     function setActivePersona(name) {
@@ -515,8 +523,11 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         cell.classList.toggle('selected', selected.has(slot));
       });
 
-      clearTimeout(saveTimer);
-      setSaveStatus('hidden');
+      isDirty = false;
+      const ab = document.getElementById('approveBtn');
+      ab.style.display = '';
+      ab.disabled = true;
+      document.getElementById('approveBtnLabel').textContent = 'Approve';
       setGridLocked(false);
       updateClearBtn();
       renderPersonaBubbles();
@@ -764,7 +775,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       }
       updateClearBtn();
       previewOverlap();
-      scheduleSave();
+      markDirty();
     }
 
     function previewOverlap() {
@@ -775,18 +786,21 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       renderOverlapPanels(merged);
     }
 
-    // ---- Auto-save ----
-    let saveTimer = null;
+    // ---- Save ----
+    let isDirty = false;
+    let savedSelections = {}; // server-confirmed state per persona
 
-    function setSaveStatus(state) {
-      // state: 'saving' | 'saved' | 'hidden'
-      const el     = document.getElementById('saveStatus');
-      const led    = document.getElementById('saveLed');
-      const label  = document.getElementById('saveLabel');
-      if (state === 'hidden') { el.classList.add('hidden'); return; }
-      el.classList.remove('hidden');
-      led.className = 'save-led ' + state;
-      label.textContent = state === 'saving' ? 'Saving…' : 'Saved';
+    function checkDirty() {
+      if (!activePersona) return;
+      const saved = savedSelections[activePersona] || new Set();
+      const dirty = selected.size !== saved.size || [...selected].some(s => !saved.has(s));
+      isDirty = dirty;
+      document.getElementById('approveBtn').disabled = !dirty;
+      document.getElementById('approveBtnLabel').textContent = 'Approve';
+    }
+
+    function markDirty() {
+      checkDirty();
     }
 
     function updateClearBtn() {
@@ -801,26 +815,27 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       personaSelections[activePersona] = new Set();
       updateClearBtn();
       previewOverlap();
-      scheduleSave();
+      markDirty();
     };
 
     async function saveAvailability() {
       if (!activePersona) return;
-      setSaveStatus('saving');
+      const btn = document.getElementById('approveBtn');
+      btn.disabled = true;
+      document.getElementById('approveBtnLabel').textContent = 'Saving…';
       await fetch(`/api/sessions/${sessionId}/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: activePersona, slots: [...selected] }),
       });
-      setSaveStatus('saved');
+      isDirty = false;
+      savedSelections[activePersona] = new Set(selected);
+      document.getElementById('approveBtnLabel').textContent = '✓ Saved';
       loadOverlap();
-    }
-
-    function scheduleSave() {
-      if (!activePersona) return;
-      setSaveStatus('saving');
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveAvailability, 900);
+      setTimeout(() => {
+        btn.disabled = true;
+        document.getElementById('approveBtnLabel').textContent = 'Approve';
+      }, 1500);
     }
 
     // ---- Load session data & render ----
@@ -840,6 +855,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         if (!personas.find(p => p.name === name)) {
           personas.push({ name, color: AVATAR_COLORS[personas.length % AVATAR_COLORS.length] });
         }
+        savedSelections[name] = new Set(slots);
         if (!personaSelections[name]) personaSelections[name] = new Set(slots);
       });
 
@@ -1326,7 +1342,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
 
       personaSelections[activePersona] = new Set(selected);
       previewOverlap();
-      scheduleSave();
+      saveAvailability();
       closeAiImport();
     };
 

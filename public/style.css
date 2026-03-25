@@ -1006,6 +1006,10 @@ input[type="text"]::placeholder { color: #b0b0b0; }
   background: #fff5f5;
   border-color: #ffc8c8;
   color: #c0392b;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .ai-import-btn.clear-btn:hover {
@@ -1040,9 +1044,27 @@ input[type="text"]::placeholder { color: #b0b0b0; }
 
 .grid-clear-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 12px;
 }
+.approve-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid transparent;
+  padding: 8px 20px;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.approve-btn:hover:not(:disabled) { background: #16a34a; }
+.approve-btn:disabled { background: transparent; color: #aaa; border: 1.5px solid #ddd; cursor: default; }
 
 .ai-import-modal {
   width: min(95vw, 1100px) !important;
