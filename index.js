@@ -41,7 +41,7 @@ app.get('/api/sessions/:id', async (req, res) => {
   const participants = {};
   for (const row of rows) participants[row.name] = row.slots;
 
-  res.json({ id: session.id, title: session.title, participants });
+  res.json({ id: session.id, title: session.title, settings: session.settings ?? null, participants });
 });
 
 // Update session title
@@ -53,9 +53,12 @@ app.patch('/api/sessions/:id', async (req, res) => {
     .single();
   if (sessionError || !session) return res.status(404).json({ error: 'Session not found' });
 
-  const { title } = req.body;
-  if (title !== undefined) {
-    const { error } = await supabase.from('sessions').update({ title }).eq('id', req.params.id);
+  const { title, settings } = req.body;
+  const updates = {};
+  if (title !== undefined) updates.title = title;
+  if (settings !== undefined) updates.settings = settings;
+  if (Object.keys(updates).length > 0) {
+    const { error } = await supabase.from('sessions').update(updates).eq('id', req.params.id);
     if (error) return res.status(500).json({ error: error.message });
   }
   res.json({ ok: true });

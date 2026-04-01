@@ -318,6 +318,8 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
     let weekOffset        = 0;
     let lastInsights      = [];
     let meetingDuration   = 1; // hours
+    let settingsLoaded    = false; // true after first server settings sync
+    let applyingSettings  = false; // true while applying loaded settings (suppress saves)
 
     // ---- Init ----
     document.getElementById('shareLink').value = location.origin + '/session.html?id=' + sessionId;
@@ -431,7 +433,14 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
         body.appendChild(section);
         const filtered = filteredOut.size > 0;
         const total = Object.keys(serverParticipants).length;
-        note.textContent = filtered ? `Showing ${total - filteredOut.size} of ${total} people` : `Based on ${total} participant${total !== 1 ? 's' : ''}`;
+        const parts = [];
+        parts.push(filtered ? `Showing ${total - filteredOut.size} of ${total} people` : `Based on ${total} participant${total !== 1 ? 's' : ''}`);
+        if (meetingDuration > 1) parts.push(`${meetingDuration}h minimum`);
+        if (dateMode) {
+          const dates = getWeekDates(weekOffset);
+          parts.push(`Week of ${MONTH_ABBR[dates[0].getMonth()]} ${dates[0].getDate()}–${dates[6].getDate()}`);
+        }
+        note.textContent = parts.join(' · ');
       }
     }
 
@@ -463,12 +472,22 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       setActivePersona(existing ? existing.name : name);
     }
 
+    function saveSettings() {
+      if (applyingSettings) return;
+      fetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings: { meetingDuration, dateMode, weekOffset } })
+      });
+    }
+
     function setMeetingDuration(h) {
       meetingDuration = h;
       [1,2,3,4].forEach(n => document.getElementById(`dur${n}h`).classList.toggle('active', n === h));
       const merged = { ...serverParticipants };
       if (activePersona) merged[activePersona] = [...selected];
       renderOverlapPanels(merged);
+      saveSettings();
     }
 
     function toggleSettings(e) {
@@ -660,6 +679,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       const merged = { ...serverParticipants };
       if (activePersona) merged[activePersona] = [...selected];
       renderOverlapPanels(merged);
+      saveSettings();
     }
 
     function shiftWeek(delta) {
@@ -669,6 +689,7 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       const merged = { ...serverParticipants };
       if (activePersona) merged[activePersona] = [...selected];
       renderOverlapPanels(merged);
+      saveSettings();
     }
 
     // ---- Build availability grid ----
@@ -862,6 +883,19 @@ Only include times when I am NOT free (busy/blocked). Use the hours I actually h
       if (sessionRes.title && !document.getElementById('sessionTitleInput').value) {
         document.getElementById('sessionTitleInput').value = sessionRes.title;
         updatePhVisibility();
+      }
+
+      // Apply saved settings on first load only
+      if (!settingsLoaded) {
+        settingsLoaded = true;
+        const s = sessionRes.settings;
+        if (s) {
+          applyingSettings = true;
+          if (typeof s.meetingDuration === 'number') setMeetingDuration(s.meetingDuration);
+          if (typeof s.weekOffset === 'number' && s.weekOffset !== 0) { weekOffset = s.weekOffset; updateWeekNav(); }
+          if (typeof s.dateMode === 'boolean' && s.dateMode !== dateMode) setDateMode(s.dateMode);
+          applyingSettings = false;
+        }
       }
 
       // Sync server participants to local personas + seed their saved slots
